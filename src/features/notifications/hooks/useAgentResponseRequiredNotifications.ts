@@ -224,8 +224,8 @@ export function useAgentResponseRequiredNotifications({
 
     const workspaceName = getWorkspaceName?.(latestUnnotifiedApproval.workspace_id);
     const title = workspaceName
-      ? `Approval needed — ${workspaceName}`
-      : "Approval needed";
+      ? `需要批准 — ${workspaceName}`
+      : "需要批准";
     const commandInfo = getApprovalCommandInfo(latestUnnotifiedApproval.params ?? {});
     const body = commandInfo?.preview
       ? truncateText(commandInfo.preview, MAX_BODY_LENGTH)
@@ -283,9 +283,9 @@ export function useAgentResponseRequiredNotifications({
     notifiedUserInputsRef.current.add(questionKey);
 
     const workspaceName = getWorkspaceName?.(latestUnnotifiedQuestion.workspace_id);
-    const title = workspaceName ? `Question — ${workspaceName}` : "Question";
+    const title = workspaceName ? `问题 — ${workspaceName}` : "问题";
     const first = latestUnnotifiedQuestion.params.questions[0];
-    const bodyRaw = first?.header?.trim() || first?.question?.trim() || "Your input is needed.";
+    const bodyRaw = first?.header?.trim() || first?.question?.trim() || "需要你的输入。";
     const body = truncateText(bodyRaw, MAX_BODY_LENGTH);
 
     void notify(title, body, {
@@ -355,11 +355,11 @@ export function useAgentResponseRequiredNotifications({
         return;
       }
       const workspaceName = getWorkspaceName?.(workspaceId);
-      const title = workspaceName ? `Plan ready — ${workspaceName}` : "Plan ready";
+      const title = workspaceName ? `计划已就绪 — ${workspaceName}` : "计划已就绪";
       const text = String(item.text ?? "").trim();
       const body = text
         ? truncateText(text.split("\n")[0] ?? text, MAX_BODY_LENGTH)
-        : "Plan is ready. Open CodexMonitor to respond.";
+        : "计划已就绪。打开 CodexMonitor 进行响应。";
       const extra = {
         kind: "response_required",
         type: "plan",

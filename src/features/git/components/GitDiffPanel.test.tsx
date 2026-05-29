@@ -115,6 +115,15 @@ describe("GitDiffPanel", () => {
     expect(onCommit).toHaveBeenCalledTimes(1);
   });
 
+  it("pulls the current branch from the branch row", () => {
+    const onPull = vi.fn();
+    render(<GitDiffPanel {...baseProps} onPull={onPull} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Pull 当前分支" }));
+
+    expect(onPull).toHaveBeenCalledTimes(1);
+  });
+
   it("runs uncommitted review from unstaged section actions", () => {
     const onReviewUncommittedChanges = vi.fn();
     render(

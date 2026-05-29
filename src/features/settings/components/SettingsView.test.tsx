@@ -1566,7 +1566,10 @@ describe("SettingsView Codex defaults", () => {
     ) as HTMLSelectElement;
 
     await waitFor(() => {
-      expect(getModelListMock).toHaveBeenCalledWith("w1");
+      expect(getModelListMock).toHaveBeenCalledWith(
+        "w1",
+        expect.objectContaining({ includeHidden: true, limit: 200 }),
+      );
       expect(modelSelect.value).toBe("gpt-5.1");
     });
 
@@ -1743,9 +1746,7 @@ describe("SettingsView Features", () => {
       },
     });
 
-    await screen.findByText(
-      "Use Responses API WebSocket transport for OpenAI by default.",
-    );
+    await screen.findByText("默认对 OpenAI 使用 Responses API WebSocket transport。");
     expect(screen.queryByText("Steer mode")).toBeNull();
   });
 
@@ -1788,9 +1789,7 @@ describe("SettingsView Features", () => {
       },
     });
 
-    await screen.findByText(
-      "Use Responses API WebSocket transport for OpenAI by default.",
-    );
+    await screen.findByText("默认对 OpenAI 使用 Responses API WebSocket transport。");
   });
 });
 

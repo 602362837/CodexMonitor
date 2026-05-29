@@ -104,7 +104,7 @@ export function OpenAppMenu({
       },
     });
     pushErrorToast({
-      title: "Couldn’t open workspace",
+      title: "无法打开工作区",
       message,
     });
     console.warn("Failed to open workspace in target app", {
@@ -177,10 +177,10 @@ export function OpenAppMenu({
 
   const selectedCanOpen = canOpenTarget(selectedOpenTarget);
   const openLabel = selectedCanOpen
-    ? `Open in ${selectedOpenTarget.label}`
+    ? `在 ${selectedOpenTarget.label} 中打开`
     : selectedOpenTarget.target.kind === "command"
-      ? "Set command in Settings"
-      : "Set app name in Settings";
+      ? "在设置中填写命令"
+      : "在设置中填写应用名称";
 
   return (
     <SplitActionMenu
@@ -194,7 +194,7 @@ export function OpenAppMenu({
           onClick={handleOpen}
           disabled={!selectedCanOpen}
           data-tauri-drag-region="false"
-          aria-label={`Open in ${selectedOpenTarget.label}`}
+          aria-label={`用 ${selectedOpenTarget.label} 打开`}
           title={openLabel}
           data-tooltip={openLabel}
           data-tooltip-placement="bottom"
@@ -213,9 +213,9 @@ export function OpenAppMenu({
       isOpen={openMenuOpen}
       onToggle={openMenu.toggle}
       toggleClassName="ghost main-header-action open-app-toggle ds-tooltip-trigger"
-      toggleAriaLabel="Select editor"
-      toggleTitle="Select editor"
-      toggleTooltip="Select editor"
+      toggleAriaLabel="选择编辑器"
+      toggleTitle="选择编辑器"
+      toggleTooltip="选择编辑器"
       toggleTooltipPlacement="bottom"
       toggleIcon={<ChevronDown size={14} aria-hidden />}
       popoverClassName="open-app-dropdown"

@@ -7,7 +7,7 @@ import type {
   WorkspaceSettings,
 } from "../../../types";
 import {
-  RESERVED_GROUP_NAME,
+  DISPLAY_UNGROUPED_LABEL,
   buildGroupedWorkspaces,
   buildWorkspaceById,
   buildWorkspaceGroupById,
@@ -171,7 +171,7 @@ export function useWorkspaces(options: UseWorkspacesOptions = {}): UseWorkspaces
     workspaceGroups,
     groupedWorkspaces,
     getWorkspaceGroupName,
-    ungroupedLabel: RESERVED_GROUP_NAME,
+    ungroupedLabel: DISPLAY_UNGROUPED_LABEL,
     activeWorkspace,
     activeWorkspaceId,
     setActiveWorkspaceId,

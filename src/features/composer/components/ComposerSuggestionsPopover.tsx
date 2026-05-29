@@ -47,6 +47,23 @@ type ComposerSuggestionsPopoverProps = {
 
 const isFileSuggestion = (item: AutocompleteItem) => item.group === "Files";
 
+function groupLabel(group: AutocompleteItem["group"]) {
+  switch (group) {
+    case "Files":
+      return "文件";
+    case "Skills":
+      return "Skills";
+    case "Apps":
+      return "Apps";
+    case "Prompts":
+      return "提示词";
+    case "Slash":
+      return "Slash 命令";
+    default:
+      return group;
+  }
+}
+
 const suggestionIcon = (item: AutocompleteItem) => {
   if (isFileSuggestion(item)) {
     return FileText;
@@ -208,7 +225,7 @@ export function ComposerSuggestionsPopover({
 
           return (
             <div key={item.id}>
-              {showGroup && <div className="composer-suggestion-section">{item.group}</div>}
+              {showGroup && <div className="composer-suggestion-section">{groupLabel(item.group)}</div>}
               <button
                 type="button"
                 className={`composer-suggestion${index === highlightIndex ? " is-active" : ""}`}

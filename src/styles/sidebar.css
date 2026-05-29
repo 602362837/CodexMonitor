@@ -551,10 +551,19 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  border-radius: 8px;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .workspace-group + .workspace-group {
   margin-top: 10px;
+}
+
+.workspace-group.is-drop-target {
+  background: color-mix(in srgb, var(--border-accent) 18%, transparent);
+  box-shadow: inset 0 0 0 1px var(--border-accent-soft);
 }
 
 .workspace-group-header {
@@ -632,6 +641,68 @@
   padding-left: 0;
 }
 
+.workspace-group-name-input {
+  min-width: 0;
+  flex: 1;
+  height: 24px;
+  border: 1px solid var(--border-accent-soft);
+  border-radius: 6px;
+  background: var(--cm-surface-panel-loud);
+  color: var(--text-strong);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 7px;
+  outline: none;
+  -webkit-app-region: no-drag;
+}
+
+.workspace-group-name-input:focus {
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--border-accent) 20%, transparent);
+}
+
+.workspace-group-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.group-action {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-app-region: no-drag;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.group-action svg {
+  width: 13px;
+  height: 13px;
+}
+
+.workspace-group-header:hover .group-action,
+.group-action:focus-visible {
+  opacity: 1;
+}
+
+.group-action:hover,
+.group-action:focus-visible {
+  background: var(--cm-surface-panel-loud);
+  color: var(--text-strong);
+}
+
 .workspace-group-list {
   display: grid;
   grid-template-rows: 1fr;
@@ -698,6 +769,14 @@
   flex-direction: column;
   gap: 8px;
   overflow-x: hidden;
+}
+
+.workspace-card[draggable="true"] {
+  cursor: grab;
+}
+
+.workspace-card[draggable="true"]:active {
+  cursor: grabbing;
 }
 
 .workspace-card-content {

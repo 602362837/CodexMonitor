@@ -32,6 +32,21 @@ function extractModelItems(response: unknown): unknown[] {
   return [];
 }
 
+export function extractModelListNextCursor(response: unknown): string | null {
+  if (!response || typeof response !== "object") {
+    return null;
+  }
+
+  const record = response as Record<string, unknown>;
+  const result =
+    record.result && typeof record.result === "object"
+      ? (record.result as Record<string, unknown>)
+      : null;
+  const nextCursor = result?.nextCursor ?? result?.next_cursor ?? record.nextCursor ?? record.next_cursor;
+
+  return normalizeEffortValue(nextCursor);
+}
+
 function parseReasoningEfforts(item: Record<string, unknown>): ModelOption["supportedReasoningEfforts"] {
   const camel = item.supportedReasoningEfforts;
   if (Array.isArray(camel)) {

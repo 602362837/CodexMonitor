@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import type { MouseEvent, MutableRefObject, ReactNode } from "react";
+import type { DragEvent, MouseEvent, MutableRefObject, ReactNode } from "react";
 import Copy from "lucide-react/dist/esm/icons/copy";
 import GitBranch from "lucide-react/dist/esm/icons/git-branch";
 import Plus from "lucide-react/dist/esm/icons/plus";
@@ -24,7 +24,6 @@ import type {
 
 type SidebarWorkspaceGroupsProps = {
   groups: WorkspaceGroupSection[];
-  hasWorkspaceGroups: boolean;
   collapsedGroups: Set<string>;
   ungroupedCollapseId: string;
   toggleGroupCollapse: (groupId: string) => void;
@@ -82,15 +81,43 @@ type SidebarWorkspaceGroupsProps = {
   onToggleExpanded: (workspaceId: string) => void;
   onLoadOlderThreads: (workspaceId: string) => void;
   onToggleAddMenu: (anchor: SidebarWorkspaceAddMenuAnchor | null) => void;
+  editingGroupId: string | null;
+  editingGroupName: string;
+  onEditingGroupNameChange: (value: string) => void;
+  onCommitEditingGroup: () => void;
+  onCancelEditingGroup: () => void;
+  onRenameGroup: (groupId: string, currentName: string) => void;
+  onDeleteGroup: (groupId: string, currentName: string) => void;
+  onWorkspaceDragStart: (
+    event: DragEvent<HTMLDivElement>,
+    workspace: WorkspaceInfo,
+  ) => void;
+  onWorkspaceDragEnd: () => void;
+  onGroupDragOver: (event: DragEvent<HTMLDivElement>, groupId: string | null) => void;
+  onGroupDragEnter: (event: DragEvent<HTMLDivElement>, groupId: string | null) => void;
+  onGroupDragLeave: (event: DragEvent<HTMLDivElement>, groupId: string | null) => void;
+  onGroupDrop: (event: DragEvent<HTMLDivElement>, groupId: string | null) => void;
+  dropTargetGroupId: string | null | undefined;
 };
 
 type SidebarWorkspaceEntryProps = Omit<
   SidebarWorkspaceGroupsProps,
   | "groups"
-  | "hasWorkspaceGroups"
   | "collapsedGroups"
   | "ungroupedCollapseId"
   | "toggleGroupCollapse"
+  | "editingGroupId"
+  | "editingGroupName"
+  | "onEditingGroupNameChange"
+  | "onCommitEditingGroup"
+  | "onCancelEditingGroup"
+  | "onRenameGroup"
+  | "onDeleteGroup"
+  | "onGroupDragOver"
+  | "onGroupDragEnter"
+  | "onGroupDragLeave"
+  | "onGroupDrop"
+  | "dropTargetGroupId"
 > & {
   workspace: WorkspaceInfo;
 };
@@ -140,6 +167,8 @@ function SidebarWorkspaceEntry({
   onToggleExpanded,
   onLoadOlderThreads,
   onToggleAddMenu,
+  onWorkspaceDragStart,
+  onWorkspaceDragEnd,
 }: SidebarWorkspaceEntryProps) {
   if (cloneChildIds.has(workspace.id)) {
     return null;
@@ -201,10 +230,10 @@ function SidebarWorkspaceEntry({
       workspaceName={renderHighlightedName(workspace.name)}
       summary={
         displayThreadRootCount > 0
-          ? `${displayThreadRootCount} conversation${
-              displayThreadRootCount === 1 ? "" : "s"
-            }${threads[0] ? ` · Updated ${getThreadTime(threads[0])}` : ""}`
-          : "No conversations yet"
+          ? `${displayThreadRootCount} 个对话${
+              threads[0] ? ` · 更新于 ${getThreadTime(threads[0])}` : ""
+            }`
+          : "还没有对话"
       }
       isActive={workspace.id === activeWorkspaceId}
       isCollapsed={isCollapsed}
@@ -215,6 +244,8 @@ function SidebarWorkspaceEntry({
       onToggleWorkspaceCollapse={onToggleWorkspaceCollapse}
       onConnectWorkspace={onConnectWorkspace}
       onToggleAddMenu={onToggleAddMenu}
+      onWorkspaceDragStart={onWorkspaceDragStart}
+      onWorkspaceDragEnd={onWorkspaceDragEnd}
     >
       {addMenuOpen && addMenuAnchor &&
         createPortal(
@@ -236,7 +267,7 @@ function SidebarWorkspaceEntry({
               }}
               icon={<Plus aria-hidden />}
             >
-              New agent
+              新建 agent
             </PopoverMenuItem>
             <PopoverMenuItem
               className="workspace-add-option"
@@ -247,7 +278,7 @@ function SidebarWorkspaceEntry({
               }}
               icon={<GitBranch aria-hidden />}
             >
-              New worktree agent
+              新建工作树 agent
             </PopoverMenuItem>
             <PopoverMenuItem
               className="workspace-add-option"
@@ -258,7 +289,7 @@ function SidebarWorkspaceEntry({
               }}
               icon={<Copy aria-hidden />}
             >
-              New clone agent
+              新建克隆 agent
             </PopoverMenuItem>
           </PopoverSurface>,
           document.body,
@@ -279,7 +310,7 @@ function SidebarWorkspaceEntry({
           <span className={`thread-status ${draftStatusClass}`} aria-hidden />
           <div className="thread-content">
             <div className="thread-headline">
-              <span className="thread-name">New Agent</span>
+              <span className="thread-name">新建 Agent</span>
             </div>
           </div>
         </div>
@@ -313,7 +344,7 @@ function SidebarWorkspaceEntry({
           onLoadOlderThreads={onLoadOlderThreads}
           searchQuery={normalizedQuery}
           isSearchActive={isSearchActive}
-          sectionLabel="Clone agents"
+          sectionLabel="克隆 agents"
           sectionIcon={<Copy className="worktree-header-icon" aria-hidden />}
           className="clone-section"
         />
@@ -379,25 +410,49 @@ function SidebarWorkspaceEntry({
 
 export function SidebarWorkspaceGroups({
   groups,
-  hasWorkspaceGroups,
   collapsedGroups,
   ungroupedCollapseId,
   toggleGroupCollapse,
+  editingGroupId,
+  editingGroupName,
+  onEditingGroupNameChange,
+  onCommitEditingGroup,
+  onCancelEditingGroup,
+  onRenameGroup,
+  onDeleteGroup,
+  onGroupDragOver,
+  onGroupDragEnter,
+  onGroupDragLeave,
+  onGroupDrop,
+  dropTargetGroupId,
   ...entryProps
 }: SidebarWorkspaceGroupsProps) {
   return groups.map((group) => {
-    const showGroupHeader = Boolean(group.id) || hasWorkspaceGroups;
+    const showGroupHeader = true;
     const toggleId = group.id ?? (showGroupHeader ? ungroupedCollapseId : null);
     const isGroupCollapsed = Boolean(toggleId && collapsedGroups.has(toggleId));
 
     return (
       <WorkspaceGroup
         key={group.id ?? "ungrouped"}
+        groupId={group.id}
         toggleId={toggleId}
         name={group.name}
+        isEditing={Boolean(group.id && editingGroupId === group.id)}
+        editingValue={editingGroupName}
         showHeader={showGroupHeader}
         isCollapsed={isGroupCollapsed}
         onToggleCollapse={toggleGroupCollapse}
+        onEditingValueChange={onEditingGroupNameChange}
+        onCommitEditing={onCommitEditingGroup}
+        onCancelEditing={onCancelEditingGroup}
+        onRenameGroup={onRenameGroup}
+        onDeleteGroup={onDeleteGroup}
+        onDragOver={onGroupDragOver}
+        onDragEnter={onGroupDragEnter}
+        onDragLeave={onGroupDragLeave}
+        onDrop={onGroupDrop}
+        isDropTarget={dropTargetGroupId === group.id}
       >
         {group.workspaces.map((workspace) => (
           <SidebarWorkspaceEntry

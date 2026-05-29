@@ -44,12 +44,12 @@ export function SettingsDictationSection({
 
   return (
     <SettingsSection
-      title="Dictation"
-      subtitle="Enable microphone dictation with on-device transcription."
+      title="听写"
+      subtitle="启用麦克风听写，并在设备本地转写。"
     >
       <SettingsToggleRow
-        title="Enable dictation"
-        subtitle="Downloads the selected Whisper model on first use."
+        title="启用听写"
+        subtitle="首次使用时会下载所选 Whisper 模型。"
       >
         <SettingsToggleSwitch
           pressed={appSettings.dictationEnabled}
@@ -116,25 +116,25 @@ export function SettingsDictationSection({
             })
           }
         >
-          <option value="">Auto-detect only</option>
-          <option value="en">English</option>
-          <option value="es">Spanish</option>
-          <option value="fr">French</option>
-          <option value="de">German</option>
-          <option value="it">Italian</option>
-          <option value="pt">Portuguese</option>
-          <option value="nl">Dutch</option>
-          <option value="sv">Swedish</option>
-          <option value="no">Norwegian</option>
-          <option value="da">Danish</option>
-          <option value="fi">Finnish</option>
-          <option value="pl">Polish</option>
-          <option value="tr">Turkish</option>
-          <option value="ru">Russian</option>
-          <option value="uk">Ukrainian</option>
-          <option value="ja">Japanese</option>
-          <option value="ko">Korean</option>
-          <option value="zh">Chinese</option>
+          <option value="">仅自动检测</option>
+          <option value="en">英语</option>
+          <option value="es">西班牙语</option>
+          <option value="fr">法语</option>
+          <option value="de">德语</option>
+          <option value="it">意大利语</option>
+          <option value="pt">葡萄牙语</option>
+          <option value="nl">荷兰语</option>
+          <option value="sv">瑞典语</option>
+          <option value="no">挪威语</option>
+          <option value="da">丹麦语</option>
+          <option value="fi">芬兰语</option>
+          <option value="pl">波兰语</option>
+          <option value="tr">土耳其语</option>
+          <option value="ru">俄语</option>
+          <option value="uk">乌克兰语</option>
+          <option value="ja">日语</option>
+          <option value="ko">韩语</option>
+          <option value="zh">中文</option>
         </select>
         <div className="settings-help">
           Auto-detect stays on; this nudges the decoder toward your preference.
@@ -155,7 +155,7 @@ export function SettingsDictationSection({
             })
           }
         >
-          <option value="">Off</option>
+          <option value="">关闭</option>
           <option value="alt">{optionKeyLabel}</option>
           <option value="shift">Shift</option>
           <option value="control">Control</option>
@@ -167,13 +167,13 @@ export function SettingsDictationSection({
       </div>
       {dictationModelStatus && (
         <div className="settings-field">
-          <div className="settings-field-label">Model status ({selectedDictationModel.label})</div>
+          <div className="settings-field-label">模型状态（{selectedDictationModel.label}）</div>
           <div className="settings-help">
-            {dictationModelStatus.state === "ready" && "Ready for dictation."}
-            {dictationModelStatus.state === "missing" && "Model not downloaded yet."}
-            {dictationModelStatus.state === "downloading" && "Downloading model..."}
+            {dictationModelStatus.state === "ready" && "可用于听写。"}
+            {dictationModelStatus.state === "missing" && "模型尚未下载。"}
+            {dictationModelStatus.state === "downloading" && "正在下载模型..."}
             {dictationModelStatus.state === "error" &&
-              (dictationModelStatus.error ?? "Download error.")}
+              (dictationModelStatus.error ?? "下载错误。")}
           </div>
           {dictationProgress && (
             <div className="settings-download-progress">

@@ -177,7 +177,7 @@ export function buildResumeHydrationPlan({
   const preview = asString(thread.preview ?? "");
   const customName = getCustomName(workspaceId, threadId);
   const threadName =
-    !customName && preview ? previewThreadName(preview, "New Agent") : null;
+    !customName && preview ? previewThreadName(preview, "新 Agent") : null;
   const lastAgentMessage = [...mergedItems]
     .reverse()
     .find(

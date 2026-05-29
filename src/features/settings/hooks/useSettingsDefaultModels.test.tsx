@@ -112,13 +112,19 @@ describe("useSettingsDefaultModels", () => {
     );
 
     await waitFor(() => {
-      expect(getModelListMock).toHaveBeenCalledWith("w1");
+      expect(getModelListMock).toHaveBeenCalledWith(
+        "w1",
+        expect.objectContaining({ includeHidden: true, limit: 200 }),
+      );
     });
 
     rerender({ projects: [workspace("w2", true)] });
 
     await waitFor(() => {
-      expect(getModelListMock).toHaveBeenCalledWith("w2");
+      expect(getModelListMock).toHaveBeenCalledWith(
+        "w2",
+        expect.objectContaining({ includeHidden: true, limit: 200 }),
+      );
     });
 
     await act(async () => {
@@ -154,8 +160,14 @@ describe("useSettingsDefaultModels", () => {
 
     await waitFor(() => {
       expect(connectWorkspaceMock).toHaveBeenCalledWith("w1");
-      expect(getModelListMock).toHaveBeenCalledWith("w1");
-      expect(getModelListMock).not.toHaveBeenCalledWith("w2");
+      expect(getModelListMock).toHaveBeenCalledWith(
+        "w1",
+        expect.objectContaining({ includeHidden: true, limit: 200 }),
+      );
+      expect(getModelListMock).not.toHaveBeenCalledWith(
+        "w2",
+        expect.anything(),
+      );
       expect(result.current.models[0]?.model).toBe("gpt-5.1");
     });
   });

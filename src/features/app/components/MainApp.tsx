@@ -811,7 +811,7 @@ export default function MainApp() {
   });
 
   const ensureLaunchTerminal = useCallback(
-    (workspaceId: string) => ensureTerminalWithTitle(workspaceId, "launch", "Launch"),
+    (workspaceId: string) => ensureTerminalWithTitle(workspaceId, "launch", "启动"),
     [ensureTerminalWithTitle],
   );
 
@@ -1056,6 +1056,7 @@ export default function MainApp() {
     workspacesById,
     hasLoaded,
     showHome,
+    activeWorkspaceId,
     threadsByWorkspace,
     lastAgentMessageByThread,
     threadStatusById,
@@ -1592,7 +1593,6 @@ export default function MainApp() {
     },
     workspaces,
     groupedWorkspaces,
-    workspaceGroupsCount: workspaceGroups.length,
     deletingWorktreeIds,
     newAgentDraftWorkspaceId,
     startingDraftThreadWorkspaceId,
@@ -1691,6 +1691,10 @@ export default function MainApp() {
     handleAddAgent,
     handleAddWorktreeAgent,
     handleAddCloneAgent,
+    handleCreateWorkspaceGroup: createWorkspaceGroup,
+    handleRenameWorkspaceGroup: renameWorkspaceGroup,
+    handleDeleteWorkspaceGroup: deleteWorkspaceGroup,
+    handleAssignWorkspaceGroup: assignWorkspaceGroup,
     handleOpenThreadLink,
     handleSelectOpenAppId,
     handleCopyThread,

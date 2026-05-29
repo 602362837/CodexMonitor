@@ -167,10 +167,10 @@ export function useWorkspaceCrud({
       const trimmedDestination = destinationPath.trim();
       const trimmedFolderName = targetFolderName?.trim() || null;
       if (!trimmedUrl) {
-        throw new Error("Remote Git URL is required.");
+        throw new Error("远程 Git URL 不能为空。");
       }
       if (!trimmedDestination) {
-        throw new Error("Destination folder is required.");
+        throw new Error("目标文件夹不能为空。");
       }
       const shouldActivate = options?.activate !== false;
       onDebug?.({

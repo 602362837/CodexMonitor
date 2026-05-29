@@ -371,7 +371,12 @@ export type CodexDoctorResult = {
   nodeDetails: string | null;
 };
 
-export type CodexUpdateMethod = "brew_formula" | "brew_cask" | "npm" | "unknown";
+export type CodexUpdateMethod =
+  | "brew_formula"
+  | "brew_cask"
+  | "npm"
+  | "desktop_app"
+  | "unknown";
 
 export type CodexUpdateResult = {
   ok: boolean;

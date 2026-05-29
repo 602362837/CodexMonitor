@@ -70,13 +70,13 @@ export function LaunchScriptEntryButton({
       {editorOpen && (
         <PopoverSurface className="launch-script-popover" role="dialog">
           <div className="launch-script-title">
-            {entry.label?.trim() || "Launch script"}
+            {entry.label?.trim() || "启动脚本"}
           </div>
           <LaunchScriptIconPicker value={draftIcon} onChange={onDraftIconChange} />
           <input
             className="launch-script-input"
             type="text"
-            placeholder="Optional label"
+            placeholder="可选标签"
             value={draftLabel}
             onChange={(event) => onDraftLabelChange(event.target.value)}
             data-tauri-drag-region="false"
@@ -114,7 +114,7 @@ export function LaunchScriptEntryButton({
               disabled={isSaving}
               data-tauri-drag-region="false"
             >
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? "保存中..." : "保存"}
             </button>
           </div>
         </PopoverSurface>

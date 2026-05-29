@@ -265,7 +265,14 @@ pub(super) async fn try_handle(
                 Ok(value) => value,
                 Err(err) => return Some(Err(err)),
             };
-            Some(state.model_list(workspace_id).await)
+            let cursor = parse_optional_string(params, "cursor");
+            let limit = parse_optional_u32(params, "limit");
+            let include_hidden = parse_optional_bool(params, "includeHidden");
+            Some(
+                state
+                    .model_list(workspace_id, cursor, limit, include_hidden)
+                    .await,
+            )
         }
         "experimental_feature_list" => {
             let workspace_id = match parse_string(params, "workspaceId") {

@@ -56,7 +56,7 @@ export function Home({
       <div className="home-hero">
         <div className="home-title">Codex Monitor</div>
         <div className="home-subtitle">
-          Orchestrate agents across your local projects.
+          在本地项目之间编排 Codex agents。
         </div>
       </div>
       <HomeLatestAgentsSection

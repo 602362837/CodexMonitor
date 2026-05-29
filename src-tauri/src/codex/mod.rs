@@ -521,6 +521,9 @@ pub(crate) async fn start_review(
 #[tauri::command]
 pub(crate) async fn model_list(
     workspace_id: String,
+    cursor: Option<String>,
+    limit: Option<u32>,
+    include_hidden: Option<bool>,
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<Value, String> {
@@ -529,12 +532,25 @@ pub(crate) async fn model_list(
             &*state,
             app,
             "model_list",
-            json!({ "workspaceId": workspace_id }),
+            json!({
+                "workspaceId": workspace_id,
+                "cursor": cursor,
+                "limit": limit,
+                "includeHidden": include_hidden,
+            }),
         )
         .await;
     }
 
-    codex_core::model_list_core(&state.sessions, workspace_id).await
+    codex_core::model_list_core(
+        &state.sessions,
+        &state.workspaces,
+        workspace_id,
+        cursor,
+        limit,
+        include_hidden,
+    )
+    .await
 }
 
 #[tauri::command]

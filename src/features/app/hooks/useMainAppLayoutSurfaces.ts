@@ -33,7 +33,6 @@ type UseMainAppLayoutSurfacesArgs = {
   >;
   workspaces: WorkspaceInfo[];
   groupedWorkspaces: Array<{ id: string | null; name: string; workspaces: WorkspaceInfo[] }>;
-  workspaceGroupsCount: number;
   deletingWorktreeIds: Set<string>;
   newAgentDraftWorkspaceId: string | null;
   startingDraftThreadWorkspaceId: string | null;
@@ -126,6 +125,10 @@ type UseMainAppLayoutSurfacesArgs = {
   handleAddAgent: SidebarProps["onAddAgent"];
   handleAddWorktreeAgent: SidebarProps["onAddWorktreeAgent"];
   handleAddCloneAgent: SidebarProps["onAddCloneAgent"];
+  handleCreateWorkspaceGroup: SidebarProps["onCreateWorkspaceGroup"];
+  handleRenameWorkspaceGroup: SidebarProps["onRenameWorkspaceGroup"];
+  handleDeleteWorkspaceGroup: SidebarProps["onDeleteWorkspaceGroup"];
+  handleAssignWorkspaceGroup: SidebarProps["onAssignWorkspaceGroup"];
   handleOpenThreadLink: LayoutNodesOptions["primary"]["messagesProps"]["onOpenThreadLink"];
   handleSelectOpenAppId: MainHeaderProps["onSelectOpenAppId"];
   handleCopyThread: MainHeaderProps["onCopyThread"];
@@ -236,7 +239,6 @@ function buildPrimarySurface({
   appSettings,
   workspaces,
   groupedWorkspaces,
-  workspaceGroupsCount,
   deletingWorktreeIds,
   newAgentDraftWorkspaceId,
   startingDraftThreadWorkspaceId,
@@ -299,6 +301,10 @@ function buildPrimarySurface({
   handleAddAgent,
   handleAddWorktreeAgent,
   handleAddCloneAgent,
+  handleCreateWorkspaceGroup,
+  handleRenameWorkspaceGroup,
+  handleDeleteWorkspaceGroup,
+  handleAssignWorkspaceGroup,
   handleOpenThreadLink,
   handleSelectOpenAppId,
   handleCopyThread,
@@ -379,7 +385,6 @@ function buildPrimarySurface({
     sidebarProps: {
       workspaces,
       groupedWorkspaces,
-      hasWorkspaceGroups: workspaceGroupsCount > 0,
       deletingWorktreeIds,
       newAgentDraftWorkspaceId,
       startingDraftThreadWorkspaceId,
@@ -399,6 +404,7 @@ function buildPrimarySurface({
       activeThreadId,
       userInputRequests,
       accountRateLimits: sidebarRateLimits,
+      localUsageSnapshot,
       usageShowRemaining: appSettings.usageShowRemaining,
       accountInfo: sidebarAccount,
       onSwitchAccount,
@@ -414,6 +420,10 @@ function buildPrimarySurface({
       onAddAgent: handleAddAgent,
       onAddWorktreeAgent: handleAddWorktreeAgent,
       onAddCloneAgent: handleAddCloneAgent,
+      onCreateWorkspaceGroup: handleCreateWorkspaceGroup,
+      onRenameWorkspaceGroup: handleRenameWorkspaceGroup,
+      onDeleteWorkspaceGroup: handleDeleteWorkspaceGroup,
+      onAssignWorkspaceGroup: handleAssignWorkspaceGroup,
       onToggleWorkspaceCollapse: sidebarHandlers.onToggleWorkspaceCollapse,
       onSelectThread: sidebarHandlers.onSelectThread,
       onDeleteThread: sidebarHandlers.onDeleteThread,
@@ -476,7 +486,7 @@ function buildPrimarySurface({
           contextUsage: activeTokenUsage,
           queuedMessages: composerWorkspaceState.activeQueue,
           queuePausedReason: composerWorkspaceState.queuePausedReason,
-          sendLabel: pullRequestComposer.composerSendLabel ?? "Send",
+          sendLabel: pullRequestComposer.composerSendLabel ?? "发送",
           steerAvailable: composerWorkspaceState.steerAvailable,
           followUpMessageBehavior: appSettings.followUpMessageBehavior,
           composerFollowUpHintEnabled: appSettings.composerFollowUpHintEnabled,
@@ -734,7 +744,7 @@ function buildGitSurface({
       worktreeApplyLabel: "apply",
       worktreeApplyTitle: worktreeState.activeParentWorkspace?.name
         ? `Apply changes to ${worktreeState.activeParentWorkspace.name}`
-        : "Apply changes to parent workspace",
+        : "将变更应用到父工作区",
       worktreeApplyLoading: worktreeState.isWorktreeWorkspace
         ? gitState.worktreeApplyLoading
         : false,
@@ -943,7 +953,6 @@ export function useMainAppLayoutSurfaces({
   appSettings,
   workspaces,
   groupedWorkspaces,
-  workspaceGroupsCount,
   deletingWorktreeIds,
   newAgentDraftWorkspaceId,
   startingDraftThreadWorkspaceId,
@@ -1010,6 +1019,10 @@ export function useMainAppLayoutSurfaces({
   handleAddAgent,
   handleAddWorktreeAgent,
   handleAddCloneAgent,
+  handleCreateWorkspaceGroup,
+  handleRenameWorkspaceGroup,
+  handleDeleteWorkspaceGroup,
+  handleAssignWorkspaceGroup,
   handleOpenThreadLink,
   handleSelectOpenAppId,
   handleCopyThread,
@@ -1105,7 +1118,6 @@ export function useMainAppLayoutSurfaces({
     appSettings,
     workspaces,
     groupedWorkspaces,
-    workspaceGroupsCount,
     deletingWorktreeIds,
     newAgentDraftWorkspaceId,
     startingDraftThreadWorkspaceId,
@@ -1172,6 +1184,10 @@ export function useMainAppLayoutSurfaces({
     handleAddAgent,
     handleAddWorktreeAgent,
     handleAddCloneAgent,
+    handleCreateWorkspaceGroup,
+    handleRenameWorkspaceGroup,
+    handleDeleteWorkspaceGroup,
+    handleAssignWorkspaceGroup,
     handleOpenThreadLink,
     handleSelectOpenAppId,
     handleCopyThread,

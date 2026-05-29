@@ -357,7 +357,7 @@ export function parseCollabToolCallItem(
     id: asString(item.id),
     kind: "tool",
     toolType: "collabToolCall",
-    title: tool ? `Collab: ${tool}` : "Collab tool call",
+    title: tool ? `协作：${tool}` : "协作工具调用",
     detail: buildCollabDetail(sender ?? undefined, receiverAgents),
     status,
     output: buildCollabOutput(prompt, collabStatuses),

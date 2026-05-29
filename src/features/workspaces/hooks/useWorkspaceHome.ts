@@ -92,7 +92,7 @@ const buildRunTitle = (prompt: string) => {
   const firstLine = prompt.trim().split("\n")[0] ?? "";
   const normalized = firstLine.replace(/\s+/g, " ").trim();
   if (!normalized) {
-    return "New run";
+    return "新运行";
   }
   if (normalized.length > MAX_TITLE_LENGTH) {
     return `${normalized.slice(0, MAX_TITLE_LENGTH)}...`;
@@ -407,7 +407,7 @@ export function useWorkspaceHome({
       }));
 
     if (runMode === "worktree" && selectedModels.length === 0) {
-      setWorkspaceError("Select at least one model to run in a worktree.");
+      setWorkspaceError("请至少选择一个模型在工作树中运行。");
       return false;
     }
 
@@ -488,7 +488,7 @@ export function useWorkspaceHome({
             activate: false,
           });
           if (!threadId) {
-            throw new Error("Failed to start a local thread.");
+            throw new Error("启动本地线程失败。");
           }
           seedThreadCodexParams?.(activeWorkspace.id, threadId, {
             modelId: selectedModelId,
@@ -511,7 +511,7 @@ export function useWorkspaceHome({
             workspaceId: activeWorkspace.id,
             threadId,
             modelId: selectedModelId ?? null,
-            modelLabel: resolveModelLabel(model, "Default model"),
+            modelLabel: resolveModelLabel(model, "默认模型"),
             sequence: 1,
           });
         } catch (error) {
@@ -541,7 +541,7 @@ export function useWorkspaceHome({
                 { activate: false },
               );
               if (!worktreeWorkspace) {
-                throw new Error("Failed to create worktree.");
+                throw new Error("创建工作树失败。");
               }
               if (!worktreeWorkspace.connected) {
                 await connectWorkspace(worktreeWorkspace);
@@ -555,7 +555,7 @@ export function useWorkspaceHome({
                 activate: false,
               });
               if (!threadId) {
-                throw new Error("Failed to start a worktree thread.");
+                throw new Error("启动工作树线程失败。");
               }
               seedThreadCodexParams?.(worktreeWorkspace.id, threadId, {
                 modelId: selection.modelId,
@@ -591,7 +591,7 @@ export function useWorkspaceHome({
           }
         }
         if (failureCount > 0) {
-          runError = `Started ${instances.length}/${totalInstanceCount} runs. ${failureCount} failed.`;
+          runError = `已启动 ${instances.length}/${totalInstanceCount} 次运行。${failureCount} 次失败。`;
         }
       }
     } catch (error) {
@@ -600,7 +600,7 @@ export function useWorkspaceHome({
     } finally {
       let status: WorkspaceHomeRun["status"] = "ready";
       if (instances.length === 0) {
-        runError ??= "Failed to start any instances.";
+        runError ??= "未能启动任何实例。";
         status = "failed";
       } else if (runError) {
         status = "partial";

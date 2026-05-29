@@ -320,8 +320,8 @@ export function GitDiffViewer({
         return;
       }
       const confirmed = await ask(
-        `Discard changes in:\n\n${path}\n\nThis cannot be undone.`,
-        { title: "Discard changes", kind: "warning" },
+        `丢弃此文件中的改动：\n\n${path}\n\n此操作无法撤销。`,
+        { title: "丢弃改动", kind: "warning" },
       );
       if (!confirmed) {
         return;
@@ -453,15 +453,15 @@ export function GitDiffViewer({
 
   const emptyStateCopy = pullRequest
     ? {
-        title: "No file changes in this pull request",
+        title: "此 pull request 没有文件改动",
         subtitle:
-          "The pull request loaded, but there are no diff hunks to render for this selection.",
-        hint: "Try switching to another pull request or commit from the Git panel.",
+          "Pull request 已加载，但当前选择没有可渲染的 diff hunks。",
+        hint: "可在 Git 面板切换到其他 pull request 或 commit。",
       }
     : {
-        title: "Working tree is clean",
-        subtitle: "No local changes were detected for the current workspace.",
-        hint: "Make an edit, stage a file, or select a commit to inspect changes here.",
+        title: "工作树是干净的",
+        subtitle: "当前工作区没有检测到本地改动。",
+        hint: "编辑文件、暂存文件，或选择一个 commit 后可在这里查看改动。",
       };
 
   return (
@@ -511,8 +511,8 @@ export function GitDiffViewer({
                 <button
                   type="button"
                   className="diff-viewer-header-action diff-viewer-header-action--discard"
-                  title="Discard changes in this file"
-                  aria-label="Discard changes in this file"
+                  title="丢弃此文件中的改动"
+                  aria-label="丢弃此文件中的改动"
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -530,7 +530,7 @@ export function GitDiffViewer({
         {error && <div className="diff-viewer-empty">{error}</div>}
         {!error && isLoading && diffs.length > 0 && (
           <div className="diff-viewer-loading diff-viewer-loading-overlay">
-            Refreshing diff...
+            正在刷新 diff...
           </div>
         )}
         {!error && !isLoading && !diffs.length && (

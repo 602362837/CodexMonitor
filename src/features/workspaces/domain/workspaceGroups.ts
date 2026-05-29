@@ -4,6 +4,7 @@ const GROUP_ID_RANDOM_MODULUS = 1_000_000;
 const SORT_ORDER_FALLBACK = Number.MAX_SAFE_INTEGER;
 
 export const RESERVED_GROUP_NAME = "Ungrouped";
+export const DISPLAY_UNGROUPED_LABEL = "未分组";
 
 export type WorkspaceGroupSection = {
   id: string | null;
@@ -20,7 +21,11 @@ export function getSortOrderValue(value: number | null | undefined) {
 }
 
 export function isReservedGroupName(name: string) {
-  return normalizeGroupName(name).toLowerCase() === RESERVED_GROUP_NAME.toLowerCase();
+  const normalized = normalizeGroupName(name).toLowerCase();
+  return (
+    normalized === RESERVED_GROUP_NAME.toLowerCase() ||
+    normalized === DISPLAY_UNGROUPED_LABEL.toLowerCase()
+  );
 }
 
 export function isDuplicateGroupName(
@@ -136,13 +141,13 @@ export function buildGroupedWorkspaces(
     workspaces: sortWorkspacesByOrderAndName(buckets.get(group.id) ?? []),
   }));
 
-  if (ungrouped.length > 0) {
+  if (ungrouped.length > 0 || workspaceGroups.length > 0) {
     sections.push({
       id: null,
-      name: RESERVED_GROUP_NAME,
+      name: DISPLAY_UNGROUPED_LABEL,
       workspaces: sortWorkspacesByOrderAndName(ungrouped),
     });
   }
 
-  return sections.filter((section) => section.workspaces.length > 0);
+  return sections;
 }

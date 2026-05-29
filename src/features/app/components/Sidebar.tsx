@@ -1,15 +1,18 @@
 import type {
   AccountSnapshot,
+  LocalUsageSnapshot,
   RequestUserInputRequest,
   RateLimitSnapshot,
   ThreadListOrganizeMode,
   ThreadListSortKey,
   ThreadSummary,
+  WorkspaceGroup,
   WorkspaceInfo,
 } from "../../../types";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import type { MouseEvent, RefObject } from "react";
+import type { DragEvent, MouseEvent, RefObject } from "react";
 import { FolderOpen } from "lucide-react";
+import { pushErrorToast } from "../../../services/toasts";
 import { SidebarBottomRail } from "./SidebarBottomRail";
 import { SidebarHeader } from "./SidebarHeader";
 import { SidebarSearchBar } from "./SidebarSearchBar";
@@ -36,7 +39,10 @@ import { useSidebarMenus } from "../hooks/useSidebarMenus";
 import { useSidebarScrollFade } from "../hooks/useSidebarScrollFade";
 import { useThreadRows } from "../hooks/useThreadRows";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
-import { getUsageLabels } from "../utils/usageLabels";
+import {
+  getLocalUsageSummaryLabels,
+  getUsageLabels,
+} from "../utils/usageLabels";
 import { formatRelativeTimeShort } from "../../../utils/time";
 import type { ThreadStatusById } from "../../../utils/threadStatus";
 
@@ -44,6 +50,7 @@ const COLLAPSED_GROUPS_STORAGE_KEY = "codexmonitor.collapsedGroups";
 const UNGROUPED_COLLAPSE_ID = "__ungrouped__";
 const ADD_MENU_WIDTH = 200;
 const ALL_THREADS_ADD_MENU_WIDTH = 220;
+const WORKSPACE_DRAG_DATA_TYPE = "application/x-codexmonitor-workspace-id";
 
 function getThreadBucketId(timestamp: number, nowMs: number): ThreadBucket["id"] {
   const now = new Date(nowMs);
@@ -71,11 +78,11 @@ function groupFlatThreadRowsByTimeBucket(
   nowMs: number,
 ): ThreadBucket[] {
   const bucketLabels: Record<ThreadBucket["id"], string> = {
-    now: "Now",
-    today: "Earlier today",
-    yesterday: "Yesterday",
-    week: "This week",
-    older: "Older",
+    now: "刚刚",
+    today: "今天早些时候",
+    yesterday: "昨天",
+    week: "本周",
+    older: "更早",
   };
   const order: ThreadBucket["id"][] = ["now", "today", "yesterday", "week", "older"];
   const bucketMap = new Map<ThreadBucket["id"], FlatThreadRow[]>();
@@ -99,7 +106,6 @@ function groupFlatThreadRowsByTimeBucket(
 type SidebarProps = {
   workspaces: WorkspaceInfo[];
   groupedWorkspaces: WorkspaceGroupSection[];
-  hasWorkspaceGroups: boolean;
   deletingWorktreeIds: Set<string>;
   newAgentDraftWorkspaceId?: string | null;
   startingDraftThreadWorkspaceId?: string | null;
@@ -119,6 +125,7 @@ type SidebarProps = {
   activeThreadId: string | null;
   userInputRequests?: RequestUserInputRequest[];
   accountRateLimits: RateLimitSnapshot | null;
+  localUsageSnapshot: LocalUsageSnapshot | null;
   usageShowRemaining: boolean;
   accountInfo: AccountSnapshot | null;
   onSwitchAccount: () => void;
@@ -146,6 +153,13 @@ type SidebarProps = {
   onRenameThread: (workspaceId: string, threadId: string) => void;
   onDeleteWorkspace: (workspaceId: string) => void;
   onDeleteWorktree: (workspaceId: string) => void;
+  onCreateWorkspaceGroup: (name: string) => Promise<WorkspaceGroup | null>;
+  onRenameWorkspaceGroup: (groupId: string, name: string) => Promise<unknown>;
+  onDeleteWorkspaceGroup: (groupId: string) => Promise<unknown>;
+  onAssignWorkspaceGroup: (
+    workspaceId: string,
+    groupId: string | null,
+  ) => Promise<unknown>;
   onLoadOlderThreads: (workspaceId: string) => void;
   onReloadWorkspaceThreads: (workspaceId: string) => void;
   workspaceDropTargetRef: RefObject<HTMLElement | null>;
@@ -160,7 +174,6 @@ type SidebarProps = {
 export const Sidebar = memo(function Sidebar({
   workspaces,
   groupedWorkspaces,
-  hasWorkspaceGroups,
   deletingWorktreeIds,
   newAgentDraftWorkspaceId = null,
   startingDraftThreadWorkspaceId = null,
@@ -180,6 +193,7 @@ export const Sidebar = memo(function Sidebar({
   activeThreadId,
   userInputRequests = [],
   accountRateLimits,
+  localUsageSnapshot,
   usageShowRemaining,
   accountInfo,
   onSwitchAccount,
@@ -207,6 +221,10 @@ export const Sidebar = memo(function Sidebar({
   onRenameThread,
   onDeleteWorkspace,
   onDeleteWorktree,
+  onCreateWorkspaceGroup,
+  onRenameWorkspaceGroup,
+  onDeleteWorkspaceGroup,
+  onAssignWorkspaceGroup,
   onLoadOlderThreads,
   onReloadWorkspaceThreads,
   workspaceDropTargetRef,
@@ -226,6 +244,9 @@ export const Sidebar = memo(function Sidebar({
     useState<SidebarWorkspaceAddMenuAnchor | null>(null);
   const [allThreadsAddMenuAnchor, setAllThreadsAddMenuAnchor] =
     useState<SidebarOverlayMenuAnchor | null>(null);
+  const [dropTargetGroupId, setDropTargetGroupId] = useState<string | null>();
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState("");
   const allThreadsAddMenuOpen = Boolean(allThreadsAddMenuAnchor);
   const addMenuController = useMenuController({
     open: Boolean(addMenuAnchor),
@@ -261,6 +282,9 @@ export const Sidebar = memo(function Sidebar({
     creditsLabel,
     showWeekly,
   } = getUsageLabels(accountRateLimits, usageShowRemaining);
+  const localUsageLabels = getLocalUsageSummaryLabels(localUsageSnapshot);
+  const localUsageFallback =
+    sessionPercent === null && localUsageLabels.hasUsage;
   const debouncedQuery = useDebouncedValue(searchQuery, 150);
   const normalizedQuery = debouncedQuery.trim().toLowerCase();
   const isSearchActive = Boolean(normalizedQuery);
@@ -359,8 +383,8 @@ export const Sidebar = memo(function Sidebar({
     ? accountEmail
     : accountInfo?.type === "apikey"
       ? "API key"
-      : "Sign in to Codex";
-  const accountActionLabel = accountEmail ? "Switch account" : "Sign in";
+      : "登录 Codex";
+  const accountActionLabel = accountEmail ? "切换账号" : "登录";
   const showAccountSwitcher = Boolean(activeWorkspaceId);
   const accountSwitchDisabled = accountSwitching || !activeWorkspaceId;
   const accountCancelDisabled = !accountSwitching || !activeWorkspaceId;
@@ -484,9 +508,9 @@ export const Sidebar = memo(function Sidebar({
               workspaceVisibleDuringSearchById.get(workspace.id) ||
               cloneSourceIdsMatchingQuery.has(workspace.id) ||
               worktreeParentIdsMatchingQuery.has(workspace.id),
-          ),
+            ),
         }))
-        .filter((group) => group.workspaces.length > 0),
+        .filter((group) => !isSearchActive || group.workspaces.length > 0),
     [
       cloneSourceIdsMatchingQuery,
       groupedWorkspaces,
@@ -748,6 +772,182 @@ export const Sidebar = memo(function Sidebar({
     [onAddAgent],
   );
 
+  const showWorkspaceGroupError = useCallback((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    pushErrorToast({
+      title: "项目分组操作失败",
+      message,
+    });
+  }, []);
+
+  const getNextWorkspaceGroupName = useCallback(() => {
+    const existingNames = new Set(
+      groupedWorkspaces
+        .filter((group) => group.id)
+        .map((group) => group.name.trim().toLowerCase()),
+    );
+    const baseName = "新分组";
+    if (!existingNames.has(baseName.toLowerCase())) {
+      return baseName;
+    }
+    let index = 2;
+    while (existingNames.has(`${baseName} ${index}`.toLowerCase())) {
+      index += 1;
+    }
+    return `${baseName} ${index}`;
+  }, [groupedWorkspaces]);
+
+  const handleCreateWorkspaceGroup = useCallback(() => {
+    const name = getNextWorkspaceGroupName();
+    void onCreateWorkspaceGroup(name)
+      .then((group) => {
+        if (!group) {
+          return;
+        }
+        setEditingGroupId(group.id);
+        setEditingGroupName(group.name);
+      })
+      .catch(showWorkspaceGroupError);
+  }, [getNextWorkspaceGroupName, onCreateWorkspaceGroup, showWorkspaceGroupError]);
+
+  const handleRenameWorkspaceGroup = useCallback(
+    (groupId: string, currentName: string) => {
+      setEditingGroupId(groupId);
+      setEditingGroupName(currentName);
+    },
+    [],
+  );
+
+  const handleCancelEditingGroup = useCallback(() => {
+    setEditingGroupId(null);
+    setEditingGroupName("");
+  }, []);
+
+  const handleCommitEditingGroup = useCallback(() => {
+    const groupId = editingGroupId;
+    if (!groupId) {
+      return;
+    }
+    const nextName = editingGroupName.trim();
+    const currentName =
+      groupedWorkspaces.find((group) => group.id === groupId)?.name ?? "";
+    if (!nextName || nextName === currentName) {
+      handleCancelEditingGroup();
+      return;
+    }
+    handleCancelEditingGroup();
+    void onRenameWorkspaceGroup(groupId, nextName)
+      .catch((error) => {
+        setEditingGroupId(groupId);
+        setEditingGroupName(nextName);
+        showWorkspaceGroupError(error);
+      });
+  }, [
+    editingGroupId,
+    editingGroupName,
+    groupedWorkspaces,
+    handleCancelEditingGroup,
+    onRenameWorkspaceGroup,
+    showWorkspaceGroupError,
+  ]);
+
+  useEffect(() => {
+    if (!editingGroupId) {
+      return;
+    }
+    const stillExists = groupedWorkspaces.some((group) => group.id === editingGroupId);
+    if (!stillExists) {
+      handleCancelEditingGroup();
+    }
+  }, [editingGroupId, groupedWorkspaces, handleCancelEditingGroup]);
+
+  const handleDeleteWorkspaceGroup = useCallback(
+    (groupId: string, currentName: string) => {
+      const confirmed = window.confirm(
+        `删除分组“${currentName}”？组内项目会移动到未分组。`,
+      );
+      if (!confirmed) {
+        return;
+      }
+      void onDeleteWorkspaceGroup(groupId).catch(showWorkspaceGroupError);
+    },
+    [onDeleteWorkspaceGroup, showWorkspaceGroupError],
+  );
+
+  const handleWorkspaceDragStart = useCallback(
+    (event: DragEvent<HTMLDivElement>, workspace: WorkspaceInfo) => {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData(WORKSPACE_DRAG_DATA_TYPE, workspace.id);
+      event.dataTransfer.setData("text/plain", workspace.name);
+    },
+    [],
+  );
+
+  const handleWorkspaceDragEnd = useCallback(() => {
+    setDropTargetGroupId(undefined);
+  }, []);
+
+  const hasWorkspaceDragData = useCallback((event: DragEvent<HTMLDivElement>) => {
+    return Array.from(event.dataTransfer.types).includes(WORKSPACE_DRAG_DATA_TYPE);
+  }, []);
+
+  const handleGroupDragOver = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      if (!hasWorkspaceDragData(event)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      event.dataTransfer.dropEffect = "move";
+    },
+    [hasWorkspaceDragData],
+  );
+
+  const handleGroupDragEnter = useCallback(
+    (event: DragEvent<HTMLDivElement>, groupId: string | null) => {
+      if (!hasWorkspaceDragData(event)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      setDropTargetGroupId(groupId);
+    },
+    [hasWorkspaceDragData],
+  );
+
+  const handleGroupDragLeave = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      if (!hasWorkspaceDragData(event)) {
+        return;
+      }
+      event.stopPropagation();
+      const current = event.currentTarget;
+      const next = event.relatedTarget;
+      if (next instanceof Node && current.contains(next)) {
+        return;
+      }
+      setDropTargetGroupId(undefined);
+    },
+    [hasWorkspaceDragData],
+  );
+
+  const handleGroupDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>, groupId: string | null) => {
+      if (!hasWorkspaceDragData(event)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      setDropTargetGroupId(undefined);
+      const workspaceId = event.dataTransfer.getData(WORKSPACE_DRAG_DATA_TYPE);
+      if (!workspaceId) {
+        return;
+      }
+      void onAssignWorkspaceGroup(workspaceId, groupId).catch(showWorkspaceGroupError);
+    },
+    [hasWorkspaceDragData, onAssignWorkspaceGroup, showWorkspaceGroupError],
+  );
+
   const worktreesByParent = useMemo(() => {
     const worktrees = new Map<string, WorkspaceInfo[]>();
     workspaces
@@ -876,6 +1076,7 @@ export const Sidebar = memo(function Sidebar({
       <SidebarHeader
         onSelectHome={onSelectHome}
         onAddWorkspace={onAddWorkspace}
+        onCreateWorkspaceGroup={handleCreateWorkspaceGroup}
         onToggleSearch={() => setIsSearchOpen((prev) => !prev)}
         isSearchOpen={isSearchOpen}
         threadListSortKey={threadListSortKey}
@@ -900,10 +1101,10 @@ export const Sidebar = memo(function Sidebar({
       >
         <div
           className={`workspace-drop-overlay-text${
-            workspaceDropText === "Adding Project..." ? " is-busy" : ""
+            workspaceDropText === "正在添加项目..." ? " is-busy" : ""
           }`}
         >
-          {workspaceDropText === "Drop Project Here" && (
+          {workspaceDropText === "将项目拖到这里" && (
             <FolderOpen className="workspace-drop-overlay-icon" aria-hidden />
           )}
           {workspaceDropText}
@@ -920,7 +1121,7 @@ export const Sidebar = memo(function Sidebar({
           {pinnedThreadRows.length > 0 && (
             <div className="pinned-section">
               <div className="sidebar-section-header">
-                <div className="sidebar-section-title">Pinned conversations</div>
+                <div className="sidebar-section-title">置顶对话</div>
                 <div className="sidebar-section-count">{pinnedRootCount}</div>
               </div>
               <PinnedThreadList
@@ -963,7 +1164,6 @@ export const Sidebar = memo(function Sidebar({
             : (
                 <SidebarWorkspaceGroups
                   groups={groupedWorkspacesForRender}
-                  hasWorkspaceGroups={hasWorkspaceGroups}
                   collapsedGroups={collapsedGroups}
                   ungroupedCollapseId={UNGROUPED_COLLAPSE_ID}
                   toggleGroupCollapse={toggleGroupCollapse}
@@ -1010,20 +1210,34 @@ export const Sidebar = memo(function Sidebar({
                   onToggleExpanded={handleToggleExpanded}
                   onLoadOlderThreads={onLoadOlderThreads}
                   onToggleAddMenu={setAddMenuAnchor}
+                  editingGroupId={editingGroupId}
+                  editingGroupName={editingGroupName}
+                  onEditingGroupNameChange={setEditingGroupName}
+                  onCommitEditingGroup={handleCommitEditingGroup}
+                  onCancelEditingGroup={handleCancelEditingGroup}
+                  onRenameGroup={handleRenameWorkspaceGroup}
+                  onDeleteGroup={handleDeleteWorkspaceGroup}
+                  onWorkspaceDragStart={handleWorkspaceDragStart}
+                  onWorkspaceDragEnd={handleWorkspaceDragEnd}
+                  onGroupDragOver={handleGroupDragOver}
+                  onGroupDragEnter={handleGroupDragEnter}
+                  onGroupDragLeave={handleGroupDragLeave}
+                  onGroupDrop={handleGroupDrop}
+                  dropTargetGroupId={dropTargetGroupId}
                 />
               )}
           {!groupedWorkspacesForRender.length && (
             <div className="empty">
               {isSearchActive
-                ? "No conversations match your search."
-                : "Add a workspace to start."}
+                ? "没有匹配搜索的对话。"
+                : "添加工作区即可开始。"}
             </div>
           )}
           {isThreadsOnlyMode &&
             groupedWorkspacesForRender.length > 0 &&
             flatThreadRows.length === 0 &&
             pinnedThreadRows.length === 0 && (
-              <div className="empty">No conversations yet.</div>
+              <div className="empty">还没有对话。</div>
             )}
         </div>
       </div>
@@ -1034,6 +1248,10 @@ export const Sidebar = memo(function Sidebar({
         weeklyResetLabel={weeklyResetLabel}
         creditsLabel={creditsLabel}
         showWeekly={showWeekly}
+        localUsageFallback={localUsageFallback}
+        localTodayLabel={localUsageLabels.todayLabel}
+        localWeekLabel={localUsageLabels.weekLabel}
+        localUpdatedLabel={localUsageLabels.updatedLabel}
         onOpenSettings={onOpenSettings}
         onOpenDebug={onOpenDebug}
         showDebugButton={showDebugButton}

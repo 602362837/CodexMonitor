@@ -368,8 +368,8 @@ export function useThreadSelectionHandlersOrchestration({
       const next = normalizeCodexArgsInput(value);
       if (next && getIgnoredCodexArgsFlagsMetadata(next).hasIgnoredFlags) {
         pushErrorToast({
-          title: "Some codex args are ignored",
-          message: "Selected flags are ignored for per-thread overrides.",
+          title: "部分 Codex 参数已忽略",
+          message: "选中的 flags 对单线程覆盖配置无效，已被忽略。",
         });
       }
       setSelectedCodexArgsOverride?.(next);

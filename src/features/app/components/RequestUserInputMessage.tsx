@@ -116,13 +116,13 @@ export function RequestUserInputMessage({
       <div
         className="bubble request-user-input-card"
         role="group"
-        aria-label="User input requested"
+        aria-label="需要用户输入"
       >
         <div className="request-user-input-header">
-          <div className="request-user-input-title">Input requested</div>
+          <div className="request-user-input-title">需要输入</div>
           {totalRequests > 1 ? (
             <div className="request-user-input-queue">
-              {`Request 1 of ${totalRequests}`}
+              {`第 1 / ${totalRequests} 个请求`}
             </div>
           ) : null}
         </div>
@@ -133,10 +133,10 @@ export function RequestUserInputMessage({
               const selectedIndex = selections[questionId];
               const options = question.options ?? [];
               const notePlaceholder = question.isOther
-                ? "Type your answer (optional)"
+                ? "输入你的回答（可选）"
                 : options.length
-                ? "Add notes (optional)"
-                : "Type your answer (optional)";
+                ? "添加备注（可选）"
+                : "输入你的回答（可选）";
               return (
                 <section key={questionId} className="request-user-input-question">
                   {question.header ? (
@@ -184,13 +184,13 @@ export function RequestUserInputMessage({
             })
           ) : (
             <div className="request-user-input-empty">
-              No questions provided.
+              没有提供问题。
             </div>
           )}
         </div>
         <div className="request-user-input-actions">
           <button className="primary" onClick={handleSubmit}>
-            Submit
+            提交
           </button>
         </div>
       </div>

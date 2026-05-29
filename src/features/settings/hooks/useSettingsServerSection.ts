@@ -96,7 +96,7 @@ const createRemoteBackendId = () =>
 
 const buildFallbackRemoteBackend = (settings: AppSettings): RemoteBackendTarget => ({
   id: settings.activeRemoteBackendId ?? "remote-default",
-  name: "Primary remote",
+  name: "主要远程后端",
   provider: "tcp",
   host: settings.remoteBackendHost,
   token: settings.remoteBackendToken,
@@ -118,15 +118,15 @@ const getActiveRemoteBackend = (settings: AppSettings): RemoteBackendTarget => {
 const validateRemoteHost = (value: string): string | null => {
   const trimmed = value.trim();
   if (!trimmed) {
-    return "Host is required.";
+    return "主机不能为空。";
   }
   const match = trimmed.match(/^([^:\s]+|\[[^\]]+\]):([0-9]{1,5})$/);
   if (!match) {
-    return "Use host:port (for example `macbook.tailnet.ts.net:4732`).";
+    return "请使用 host:port（例如 `macbook.tailnet.ts.net:4732`）。";
   }
   const port = Number(match[2]);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    return "Port must be between 1 and 65535.";
+    return "端口必须在 1 到 65535 之间。";
   }
   return null;
 };
@@ -289,7 +289,7 @@ export const useSettingsServerSection = ({
     setRemoteHostError(null);
     setRemoteHostDraft(normalizedHost);
     await updateActiveRemoteBackend({ host: normalizedHost });
-    setRemoteStatus("Remote host saved.");
+    setRemoteStatus("远程主机已保存。");
     return true;
   };
 
@@ -298,7 +298,7 @@ export const useSettingsServerSection = ({
     const active = getActiveRemoteBackend(latestSettings);
     const nextName = remoteNameDraft.trim();
     if (!nextName) {
-      const message = "Name is required.";
+      const message = "名称不能为空。";
       setRemoteNameError(message);
       setRemoteStatus(message, true);
       return;
@@ -326,7 +326,7 @@ export const useSettingsServerSection = ({
     const nextToken = remoteTokenDraft.trim() ? remoteTokenDraft.trim() : null;
     setRemoteTokenDraft(nextToken ?? "");
     await updateActiveRemoteBackend({ token: nextToken });
-    setRemoteStatus("Remote token saved.");
+    setRemoteStatus("远程 token 已保存。");
   };
 
   const handleSelectRemoteBackend = async (id: string) => {
@@ -345,7 +345,7 @@ export const useSettingsServerSection = ({
     const existingBackends = getConfiguredRemoteBackends(latestSettings);
     const nextName = draft.name.trim();
     if (!nextName) {
-      const message = "Name is required.";
+      const message = "名称不能为空。";
       setRemoteStatus(message, true);
       throw new Error(message);
     }
@@ -365,7 +365,7 @@ export const useSettingsServerSection = ({
     }
     const nextToken = draft.token.trim() ? draft.token.trim() : null;
     if (!nextToken) {
-      const message = "Remote backend token is required.";
+      const message = "远程后端 token 不能为空。";
       setRemoteStatus(message, true);
       throw new Error(message);
     }
@@ -420,7 +420,7 @@ export const useSettingsServerSection = ({
           // Keep the original connection error surfaced below.
         }
       }
-      const message = formatErrorMessage(error, "Unable to connect to the new remote backend.");
+      const message = formatErrorMessage(error, "无法连接到新的远程后端。");
       setRemoteStatus(message, true);
       throw new Error(message);
     }
@@ -460,7 +460,7 @@ export const useSettingsServerSection = ({
     const latestSettings = latestSettingsRef.current;
     const existingBackends = getConfiguredRemoteBackends(latestSettings);
     if (existingBackends.length <= 1) {
-      setRemoteStatus("You need at least one remote.", true);
+      setRemoteStatus("至少需要保留一个远程后端。", true);
       return;
     }
     const index = existingBackends.findIndex((entry) => entry.id === id);
@@ -484,7 +484,7 @@ export const useSettingsServerSection = ({
 
       if (!nextToken) {
         setMobileConnectStatusError(true);
-        setMobileConnectStatusText("Remote backend token is required.");
+        setMobileConnectStatusText("远程后端 token 不能为空。");
         return;
       }
 
@@ -522,7 +522,7 @@ export const useSettingsServerSection = ({
       } catch (error) {
         setMobileConnectStatusError(true);
         setMobileConnectStatusText(
-          error instanceof Error ? error.message : "Unable to connect to remote backend.",
+          error instanceof Error ? error.message : "无法连接到远程后端。",
         );
       } finally {
         setMobileConnectBusy(false);
@@ -547,7 +547,7 @@ export const useSettingsServerSection = ({
         setTailscaleStatus(status);
       } catch (error) {
         setTailscaleStatusError(
-          formatErrorMessage(error, "Unable to load Tailscale status."),
+          formatErrorMessage(error, "无法加载 Tailscale 状态。"),
         );
       } finally {
         setTailscaleStatusBusy(false);
@@ -564,7 +564,7 @@ export const useSettingsServerSection = ({
         setTailscaleCommandPreview(preview);
       } catch (error) {
         setTailscaleCommandError(
-          formatErrorMessage(error, "Unable to build Tailscale daemon command."),
+          formatErrorMessage(error, "无法生成 Tailscale daemon 命令。"),
         );
       } finally {
         setTailscaleCommandBusy(false);
@@ -595,7 +595,7 @@ export const useSettingsServerSection = ({
             ? error.message
             : typeof error === "string"
               ? error
-              : "Unable to update mobile access daemon status.";
+              : "无法更新移动访问 daemon 状态。";
         setTcpDaemonStatus((prev) => ({
           state: "error",
           pid: null,

@@ -47,7 +47,7 @@ export function ComposerMetaBar({
   const selectedModel =
     models.find((model) => model.id === selectedModelId) ?? null;
   const selectedModelLabel =
-    selectedModel?.displayName || selectedModel?.model || "No models";
+    selectedModel?.displayName || selectedModel?.model || "没有模型";
   const modelSelectStyle = {
     "--composer-model-select-width": `${Math.max(selectedModelLabel.length + 2, 8)}ch`,
   } as CSSProperties;
@@ -80,7 +80,7 @@ export function ComposerMetaBar({
         {collaborationModes.length > 0 && (
           canUsePlanToggle ? (
             <div className="composer-select-wrap composer-plan-toggle-wrap">
-              <label className="composer-plan-toggle" aria-label="Plan mode">
+              <label className="composer-plan-toggle" aria-label="计划模式">
                 <input
                   className="composer-plan-toggle-input"
                   type="checkbox"
@@ -106,7 +106,7 @@ export function ComposerMetaBar({
                   </svg>
                 </span>
                 <span className="composer-plan-toggle-label">
-                  {planMode?.label || "Plan"}
+                  {planMode?.label || "计划"}
                 </span>
               </label>
             </div>
@@ -125,7 +125,7 @@ export function ComposerMetaBar({
             </span>
               <select
                 className="composer-select composer-select--model composer-select--collab"
-                aria-label="Collaboration mode"
+                aria-label="协作模式"
                 value={selectedCollaborationModeId ?? ""}
                 onChange={(event) =>
                   onSelectCollaborationMode(event.target.value || null)
@@ -174,13 +174,13 @@ export function ComposerMetaBar({
           </span>
           <select
             className="composer-select composer-select--model"
-            aria-label="Model"
+            aria-label="模型"
             value={selectedModelId ?? ""}
             onChange={(event) => onSelectModel(event.target.value)}
             disabled={disabled}
             style={modelSelectStyle}
           >
-            {models.length === 0 && <option value="">No models</option>}
+            {models.length === 0 && <option value="">没有模型</option>}
             {models.map((model) => (
               <option key={model.id} value={model.id}>
                 {model.displayName || model.model}
@@ -191,8 +191,8 @@ export function ComposerMetaBar({
             <span
               className="composer-fast-indicator"
               role="status"
-              aria-label="Fast mode enabled"
-              title="Fast mode enabled"
+              aria-label="Fast 模式已启用"
+              title="Fast 模式已启用"
             >
               <Zap size={12} strokeWidth={1.8} />
             </span>
@@ -204,12 +204,12 @@ export function ComposerMetaBar({
           </span>
           <select
             className="composer-select composer-select--effort"
-            aria-label="Thinking mode"
+            aria-label="思考模式"
             value={selectedEffort ?? ""}
             onChange={(event) => onSelectEffort(event.target.value)}
             disabled={disabled || !reasoningSupported}
           >
-            {reasoningOptions.length === 0 && <option value="">Default</option>}
+            {reasoningOptions.length === 0 && <option value="">默认</option>}
             {reasoningOptions.map((effort) => (
               <option key={effort} value={effort}>
                 {effort}
@@ -224,7 +224,7 @@ export function ComposerMetaBar({
             </span>
             <select
               className="composer-select composer-select--approval"
-              aria-label="Codex args profile"
+              aria-label="Codex 参数配置"
               disabled={disabled}
               value={selectedCodexArgsOverride ?? ""}
               onChange={(event) =>
@@ -259,16 +259,16 @@ export function ComposerMetaBar({
           </span>
           <select
             className="composer-select composer-select--approval"
-            aria-label="Agent access"
+            aria-label="Agent 访问权限"
             disabled={disabled}
             value={accessMode}
             onChange={(event) =>
               onSelectAccessMode(event.target.value as AccessMode)
             }
           >
-            <option value="read-only">Read only</option>
-            <option value="current">On-Request</option>
-            <option value="full-access">Full access</option>
+            <option value="read-only">只读</option>
+            <option value="current">按需请求</option>
+            <option value="full-access">完全访问</option>
           </select>
         </div>
       </div>
@@ -277,13 +277,13 @@ export function ComposerMetaBar({
           className="composer-context-ring"
           data-tooltip={
             contextFreePercent === null
-              ? "Context free --"
-              : `Context free ${Math.round(contextFreePercent)}%`
+              ? "上下文剩余 --"
+              : `上下文剩余 ${Math.round(contextFreePercent)}%`
           }
           aria-label={
             contextFreePercent === null
-              ? "Context free --"
-              : `Context free ${Math.round(contextFreePercent)}%`
+              ? "上下文剩余 --"
+              : `上下文剩余 ${Math.round(contextFreePercent)}%`
           }
           style={
             {

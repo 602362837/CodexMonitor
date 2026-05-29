@@ -65,7 +65,7 @@ export function WorktreeCard({
           {isDeleting ? (
             <div className="worktree-deleting" role="status" aria-live="polite">
               <span className="worktree-deleting-spinner" aria-hidden />
-              <span className="worktree-deleting-label">Deleting</span>
+              <span className="worktree-deleting-label">删除中</span>
             </div>
           ) : (
             <>
@@ -76,7 +76,7 @@ export function WorktreeCard({
                   onToggleWorkspaceCollapse(worktree.id, !worktreeCollapsed);
                 }}
                 data-tauri-drag-region="false"
-                aria-label={worktreeCollapsed ? "Show agents" : "Hide agents"}
+                aria-label={worktreeCollapsed ? "显示 agents" : "隐藏 agents"}
                 aria-expanded={!worktreeCollapsed}
               >
                 <span className="worktree-toggle-icon">›</span>
@@ -84,13 +84,13 @@ export function WorktreeCard({
               {!worktree.connected && (
                 <span
                   className="connect"
-                  title="Connect workspace context to the shared Codex server"
+                  title="连接工作区上下文到共享 Codex server"
                   onClick={(event) => {
                     event.stopPropagation();
                     onConnectWorkspace(worktree);
                   }}
                 >
-                  connect
+                  连接
                 </span>
               )}
             </>

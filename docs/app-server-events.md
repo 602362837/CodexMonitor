@@ -172,6 +172,7 @@ These are v2 request methods CodexMonitor currently sends to Codex app-server:
 
 Notes:
 - `turn/start` now forwards the optional `serviceTier` override (`"fast"` for `/fast`, `null` for default/off) alongside `model`, `effort`, and `collaborationMode`.
+- `model/list` forwards pagination params (`cursor`, `limit`) and `includeHidden`; frontend model pickers request all pages.
 
 ## Missing Client Requests (Codex v2 ClientRequest Methods)
 

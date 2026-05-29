@@ -87,7 +87,7 @@ export function WorktreeSection({
   onLoadOlderThreads,
   searchQuery = "",
   isSearchActive = false,
-  sectionLabel = "Worktrees",
+  sectionLabel = "工作树",
   sectionIcon,
   className,
 }: WorktreeSectionProps) {

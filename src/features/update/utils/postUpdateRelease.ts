@@ -85,7 +85,7 @@ export async function fetchReleaseNotesForVersion(
 ): Promise<PostUpdateReleaseInfo> {
   const normalized = normalizeStoredVersion(version);
   if (!normalized) {
-    throw new Error("Invalid release version.");
+    throw new Error("无效的 release 版本。");
   }
 
   const candidates = [`v${normalized}`, normalized];

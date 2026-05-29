@@ -119,7 +119,7 @@ const MessageImageGrid = memo(function MessageImageGrid({
           type="button"
           className="message-image-thumb"
           onClick={() => onOpen(index)}
-          aria-label={`Open image ${index + 1}`}
+          aria-label={`打开图片 ${index + 1}`}
         >
           <img src={image.src} alt={image.label} loading="lazy" />
         </button>
@@ -178,7 +178,7 @@ const ImageLightbox = memo(function ImageLightbox({
           type="button"
           className="message-image-lightbox-close"
           onClick={onClose}
-          aria-label="Close image preview"
+          aria-label="关闭图片预览"
         >
           <X size={16} aria-hidden />
         </button>
@@ -348,7 +348,7 @@ export const WorkingIndicator = memo(function WorkingIndicator({
           <div className="working-timer">
             <span className="working-timer-clock">{formatDurationMs(elapsedMs)}</span>
           </div>
-          <span className="working-text">{reasoningLabel || "Working…"}</span>
+          <span className="working-text">{reasoningLabel || "工作中…"}</span>
         </div>
       )}
       {!isThinking && lastDurationMs !== null && hasItems && (
@@ -356,8 +356,8 @@ export const WorkingIndicator = memo(function WorkingIndicator({
           <span className="turn-complete-line" aria-hidden />
           <span className="turn-complete-label">
             {showPollingFetchStatus
-              ? `New message will be fetched in ${pollCountdownSeconds} seconds`
-              : `Done in ${formatDurationMs(lastDurationMs)}`}
+              ? `${pollCountdownSeconds} 秒后获取新消息`
+              : `完成，用时 ${formatDurationMs(lastDurationMs)}`}
           </span>
           <span className="turn-complete-line" aria-hidden />
         </div>
@@ -392,7 +392,7 @@ export const MessageRow = memo(function MessageRow({
         if (!src) {
           return null;
         }
-        return { src, label: `Image ${index + 1}` };
+        return { src, label: `图片 ${index + 1}` };
       })
       .filter(Boolean) as MessageImage[];
   }, [item.images]);
@@ -484,8 +484,8 @@ export const MessageRow = memo(function MessageRow({
               selectionSnapshotRef.current = getSelectedMessageText();
             }}
             onClick={handleQuote}
-            aria-label="Quote message"
-            title="Quote message"
+            aria-label="引用消息"
+            title="引用消息"
           >
             <Quote size={14} aria-hidden />
           </button>
@@ -494,8 +494,8 @@ export const MessageRow = memo(function MessageRow({
           type="button"
           className={`ghost message-copy-button${isCopied ? " is-copied" : ""}`}
           onClick={() => onCopy(item)}
-          aria-label="Copy message"
-          title="Copy message"
+          aria-label="复制消息"
+          title="复制消息"
         >
           <span className="message-copy-icon" aria-hidden>
             <Copy className="message-copy-icon-copy" size={14} />
@@ -527,7 +527,7 @@ export const ReasoningRow = memo(function ReasoningRow({
         className="tool-inline-bar-toggle"
         onClick={() => onToggle(item.id)}
         aria-expanded={isExpanded}
-        aria-label="Toggle reasoning details"
+        aria-label="切换推理详情"
       />
       <div className="tool-inline-content">
         <button
@@ -569,7 +569,7 @@ export const ReviewRow = memo(function ReviewRow({
   onOpenFileLinkMenu,
   onOpenThreadLink,
 }: ReviewRowProps) {
-  const title = item.state === "started" ? "Review started" : "Review completed";
+  const title = item.state === "started" ? "Review 已开始" : "Review 已完成";
   return (
     <div className="item-card review">
       <div className="review-header">
@@ -616,8 +616,8 @@ export const UserInputRow = memo(function UserInputRow({
 }: UserInputRowProps) {
   const first = item.questions[0];
   const previewQuestion =
-    first?.question?.trim() || first?.header?.trim() || "Input requested";
-  const firstAnswer = first?.answers[0]?.trim() || "No answer provided";
+    first?.question?.trim() || first?.header?.trim() || "需要输入";
+  const firstAnswer = first?.answers[0]?.trim() || "未提供回答";
   const previewAnswer =
     first && first.answers.length > 1
       ? `${firstAnswer} +${first.answers.length - 1}`
@@ -631,7 +631,7 @@ export const UserInputRow = memo(function UserInputRow({
         className="tool-inline-bar-toggle"
         onClick={() => onToggle(item.id)}
         aria-expanded={isExpanded}
-        aria-label="Toggle answered input details"
+        aria-label="切换已回答输入详情"
       />
       <div className="tool-inline-content">
         <button
@@ -641,16 +641,16 @@ export const UserInputRow = memo(function UserInputRow({
           aria-expanded={isExpanded}
         >
           <Check className="tool-inline-icon completed" size={14} aria-hidden />
-          <span className="tool-inline-label">answered:</span>
+          <span className="tool-inline-label">已回答：</span>
           <span className="tool-inline-value user-input-inline-preview">
             {previewQuestion}: {previewAnswer}
-            {extraQuestions > 0 ? ` +${extraQuestions} more` : ""}
+            {extraQuestions > 0 ? ` +${extraQuestions} 个更多问题` : ""}
           </span>
         </button>
         {isExpanded && (
           <div className="user-input-inline-details">
             {item.questions.map((question, index) => {
-              const title = question.question || question.header || `Question ${index + 1}`;
+              const title = question.question || question.header || `问题 ${index + 1}`;
               return (
                 <div
                   key={`${question.id}-${index}`}
@@ -670,7 +670,7 @@ export const UserInputRow = memo(function UserInputRow({
                     </div>
                   ) : (
                     <div className="user-input-inline-empty-answer">
-                      No answer provided.
+                      未提供回答。
                     </div>
                   )}
                 </div>
@@ -709,8 +709,8 @@ export const ToolRow = memo(function ToolRow({
   const ToolIcon = toolIconForSummary(item, summary);
   const summaryLabel = isFileChange
     ? changeNames.length > 1
-      ? "files edited"
-      : "file edited"
+      ? "文件已编辑"
+      : "文件已编辑"
     : isCommand
       ? ""
       : summary.label;
@@ -718,7 +718,7 @@ export const ToolRow = memo(function ToolRow({
   const summaryValue = isFileChange
     ? changeNames.length > 1
       ? `${changeNames[0]} +${changeNames.length - 1}`
-      : changeNames[0] || "changes"
+      : changeNames[0] || "变更"
     : summary.value;
   const shouldFadeCommand =
     isCommand && !isExpanded && (summaryValue?.length ?? 0) > 80;
@@ -767,9 +767,9 @@ export const ToolRow = memo(function ToolRow({
       try {
         await exportMarkdownFile(output, buildPlanExportFileName(item.id));
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to export plan.";
+        const message = error instanceof Error ? error.message : "无法导出计划。";
         pushErrorToast({
-          title: "Plan export failed",
+          title: "计划导出失败",
           message,
         });
       } finally {
@@ -786,7 +786,7 @@ export const ToolRow = memo(function ToolRow({
         className="tool-inline-bar-toggle"
         onClick={() => onToggle(item.id)}
         aria-expanded={isExpanded}
-        aria-label="Toggle tool details"
+        aria-label="切换工具详情"
       />
       <div className="tool-inline-content">
         <button
@@ -888,7 +888,7 @@ export const ToolRow = memo(function ToolRow({
               onClick={handlePlanExport}
               disabled={isExportingPlan}
             >
-              {isExportingPlan ? "Exporting..." : "Export .md"}
+              {isExportingPlan ? "正在导出..." : "导出 .md"}
             </button>
           </div>
         )}
@@ -898,7 +898,7 @@ export const ToolRow = memo(function ToolRow({
 });
 
 export const ExploreRow = memo(function ExploreRow({ item }: ExploreRowProps) {
-  const title = item.status === "exploring" ? "Exploring" : "Explored";
+  const title = item.status === "exploring" ? "正在探索" : "已探索";
   return (
     <div className="tool-inline explore-inline">
       <div className="tool-inline-bar-toggle" aria-hidden />

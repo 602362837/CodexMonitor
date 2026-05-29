@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ModelOption, WorkspaceInfo } from "@/types";
-import { connectWorkspace, getConfigModel, getModelList } from "@services/tauri";
+import { connectWorkspace, getConfigModel } from "@services/tauri";
+import { fetchCompleteModelList } from "@/features/models/utils/fetchCompleteModelList";
 import { parseModelListResponse } from "@/features/models/utils/modelListResponse";
 
 type SettingsDefaultModelsState = {
@@ -17,7 +18,7 @@ const EMPTY_STATE: SettingsDefaultModelsState = {
   connectedWorkspaceCount: 0,
 };
 
-const CONFIG_MODEL_DESCRIPTION = "Configured in CODEX_HOME/config.toml";
+const CONFIG_MODEL_DESCRIPTION = "在 CODEX_HOME/config.toml 中配置";
 
 const parseGptVersionScore = (slug: string): number | null => {
   const match = /^gpt-(\d+)(?:\.(\d+))?(?:\.(\d+))?/i.exec(slug.trim());
@@ -98,7 +99,7 @@ export function useSettingsDefaultModels(projects: WorkspaceInfo[]) {
       }
 
       const [modelListResult, configModelResult] = await Promise.allSettled([
-        canReadModelList ? getModelList(sourceWorkspaceId) : Promise.resolve(null),
+        canReadModelList ? fetchCompleteModelList(sourceWorkspaceId) : Promise.resolve([]),
         getConfigModel(sourceWorkspaceId),
       ]);
       if (requestId !== requestIdRef.current) {
@@ -120,9 +121,11 @@ export function useSettingsDefaultModels(projects: WorkspaceInfo[]) {
         errors.push(`${sourceWorkspaceName}: ${message}`);
       }
 
-      const modelsFromList = parseModelListResponse(
-        modelListResult.status === "fulfilled" ? modelListResult.value : null,
-      );
+      const modelListResponse =
+        modelListResult.status === "fulfilled" ? modelListResult.value : null;
+      const modelsFromList = (
+        Array.isArray(modelListResponse) ? modelListResponse : [modelListResponse]
+      ).flatMap((page) => parseModelListResponse(page));
       const configModel =
         configModelResult.status === "fulfilled" ? configModelResult.value : null;
       const hasConfigModel = Boolean(

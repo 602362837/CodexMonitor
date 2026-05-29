@@ -16,6 +16,10 @@ type SidebarBottomRailProps = {
   weeklyResetLabel: string | null;
   creditsLabel: string | null;
   showWeekly: boolean;
+  localUsageFallback: boolean;
+  localTodayLabel: string;
+  localWeekLabel: string;
+  localUpdatedLabel: string | null;
   onOpenSettings: () => void;
   onOpenDebug: () => void;
   showDebugButton: boolean;
@@ -52,6 +56,26 @@ function UsageRow({ label, percent, resetLabel }: UsageRowProps) {
   );
 }
 
+function LocalUsageRow({
+  label,
+  value,
+  caption,
+}: {
+  label: string;
+  value: string;
+  caption?: string | null;
+}) {
+  return (
+    <div className="sidebar-usage-row">
+      <div className="sidebar-usage-row-head">
+        <span className="sidebar-usage-name">{label}</span>
+        <span className="sidebar-usage-value">{value}</span>
+      </div>
+      {caption && <div className="sidebar-usage-reset">{caption}</div>}
+    </div>
+  );
+}
+
 export function SidebarBottomRail({
   sessionPercent,
   weeklyPercent,
@@ -59,6 +83,10 @@ export function SidebarBottomRail({
   weeklyResetLabel,
   creditsLabel,
   showWeekly,
+  localUsageFallback,
+  localTodayLabel,
+  localWeekLabel,
+  localUpdatedLabel,
   onOpenSettings,
   onOpenDebug,
   showDebugButton,
@@ -89,21 +117,34 @@ export function SidebarBottomRail({
     <div className="sidebar-bottom-rail">
       <div className="sidebar-usage-panel">
         <div className="sidebar-usage-header">
-          <div className="sidebar-usage-kicker">Usage</div>
+          <div className="sidebar-usage-kicker">用量</div>
           {creditsLabel && <div className="sidebar-usage-credits">{creditsLabel}</div>}
         </div>
         <div className="sidebar-usage-list">
-          <UsageRow
-            label="Session"
-            percent={sessionPercent}
-            resetLabel={sessionResetLabel}
-          />
-          {showWeekly && (
-            <UsageRow
-              label="Weekly"
-              percent={weeklyPercent}
-              resetLabel={weeklyResetLabel}
-            />
+          {localUsageFallback ? (
+            <>
+              <LocalUsageRow
+                label="今天"
+                value={localTodayLabel}
+                caption={localUpdatedLabel}
+              />
+              <LocalUsageRow label="最近 7 天" value={localWeekLabel} />
+            </>
+          ) : (
+            <>
+              <UsageRow
+                label="会话"
+                percent={sessionPercent}
+                resetLabel={sessionResetLabel}
+              />
+              {showWeekly && (
+                <UsageRow
+                  label="每周"
+                  percent={weeklyPercent}
+                  resetLabel={weeklyResetLabel}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
@@ -118,18 +159,18 @@ export function SidebarBottomRail({
               className="ghost sidebar-labeled-button sidebar-account-trigger"
               activeClassName="is-open"
               onClick={toggleAccountMenu}
-              aria-label="Account"
+              aria-label="账号"
             >
               <span className="sidebar-account-trigger-content">
                 <span className="sidebar-account-avatar" aria-hidden>
                   <User size={12} aria-hidden />
                 </span>
-                <span className="sidebar-account-trigger-label">Account</span>
+                <span className="sidebar-account-trigger-label">账号</span>
               </span>
             </MenuTrigger>
             {accountMenuOpen && (
               <PopoverSurface className="sidebar-account-popover" role="dialog">
-                <div className="sidebar-account-title">Account</div>
+                <div className="sidebar-account-title">账号</div>
                 <div className="sidebar-account-value">{accountLabel}</div>
                 <div className="sidebar-account-actions-row">
                   <button
@@ -152,8 +193,8 @@ export function SidebarBottomRail({
                       className="secondary sidebar-account-cancel"
                       onClick={onCancelSwitchAccount}
                       disabled={accountCancelDisabled}
-                      aria-label="Cancel account switch"
-                      title="Cancel"
+                      aria-label="取消切换账号"
+                      title="取消"
                     >
                       <X size={12} aria-hidden />
                     </button>
@@ -168,19 +209,19 @@ export function SidebarBottomRail({
               className="ghost sidebar-labeled-button sidebar-utility-button"
               type="button"
               onClick={onOpenSettings}
-              aria-label="Open settings"
+              aria-label="打开设置"
             >
               <span className="sidebar-labeled-button-icon" aria-hidden>
                 <Settings size={14} aria-hidden />
               </span>
-              <span>Settings</span>
+              <span>设置</span>
             </button>
           {showDebugButton && (
             <button
               className="ghost sidebar-utility-button"
               type="button"
               onClick={onOpenDebug}
-              aria-label="Open debug log"
+              aria-label="打开调试日志"
             >
               <ScrollText size={14} aria-hidden />
             </button>

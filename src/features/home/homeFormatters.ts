@@ -35,12 +35,12 @@ export function formatDuration(valueMs: number | null | undefined) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+    return `${hours}小时 ${minutes}分钟`;
   }
   if (totalMinutes > 0) {
-    return `${totalMinutes}m`;
+    return `${totalMinutes}分钟`;
   }
-  return `${totalSeconds}s`;
+  return `${totalSeconds}秒`;
 }
 
 export function formatDurationCompact(valueMs: number | null | undefined) {
@@ -50,13 +50,13 @@ export function formatDurationCompact(valueMs: number | null | undefined) {
   const totalMinutes = Math.max(0, Math.round(valueMs / 60000));
   if (totalMinutes >= 60) {
     const hours = totalMinutes / 60;
-    return `${hours.toFixed(hours >= 10 ? 0 : 1)}h`;
+    return `${hours.toFixed(hours >= 10 ? 0 : 1)}小时`;
   }
   if (totalMinutes > 0) {
-    return `${totalMinutes}m`;
+    return `${totalMinutes}分钟`;
   }
   const seconds = Math.max(0, Math.round(valueMs / 1000));
-  return `${seconds}s`;
+  return `${seconds}秒`;
 }
 
 export function formatDayLabel(value: string | null | undefined) {
@@ -79,13 +79,13 @@ export function formatDayLabel(value: string | null | undefined) {
 
 export function formatWeekRange(days: LocalUsageDay[]) {
   if (days.length === 0) {
-    return "No usage data";
+    return "没有用量数据";
   }
   const first = days[0];
   const last = days[days.length - 1];
   const firstLabel = formatDayLabel(first?.day);
   const lastLabel = formatDayLabel(last?.day);
-  return first?.day === last?.day ? firstLabel : `${firstLabel} to ${lastLabel}`;
+  return first?.day === last?.day ? firstLabel : `${firstLabel} 至 ${lastLabel}`;
 }
 
 export function isUsageDayActive(day: LocalUsageDay) {
@@ -108,12 +108,12 @@ export function formatAccountTypeLabel(
   value: AccountSnapshot["type"] | null | undefined,
 ) {
   if (value === "chatgpt") {
-    return "ChatGPT account";
+    return "ChatGPT 账号";
   }
   if (value === "apikey") {
     return "API key";
   }
-  return "Connected account";
+  return "已连接账号";
 }
 
 export function formatWindowDuration(valueMins: number | null | undefined) {
@@ -122,13 +122,13 @@ export function formatWindowDuration(valueMins: number | null | undefined) {
   }
   if (valueMins >= 60 * 24) {
     const days = Math.round(valueMins / (60 * 24));
-    return `${days} day${days === 1 ? "" : "s"} window`;
+    return `${days} 天窗口`;
   }
   if (valueMins >= 60) {
     const hours = Math.round(valueMins / 60);
-    return `${hours}h window`;
+    return `${hours} 小时窗口`;
   }
-  return `${Math.round(valueMins)}m window`;
+  return `${Math.round(valueMins)} 分钟窗口`;
 }
 
 export function buildWindowCaption(
@@ -158,5 +158,5 @@ export function formatDayCount(value: number | null | undefined) {
   if (value === null || value === undefined) {
     return "--";
   }
-  return `${value} day${value === 1 ? "" : "s"}`;
+  return `${value} 天`;
 }

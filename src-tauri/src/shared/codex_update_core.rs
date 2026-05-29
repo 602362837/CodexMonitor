@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use serde_json::Value;
+use std::path::Path;
 use std::time::Duration;
 
 use tokio::sync::Mutex;
@@ -143,6 +144,43 @@ async fn run_npm_install_latest(package: &str) -> Result<(bool, String), String>
     Ok((output.status.success(), combined.trim().to_string()))
 }
 
+fn looks_like_desktop_app_cli(path: &str) -> bool {
+    path.contains(".app/Contents/Resources/codex")
+}
+
+async fn resolve_codex_command_path(codex_bin: Option<&str>) -> Option<String> {
+    if let Some(bin) = codex_bin.map(str::trim).filter(|value| !value.is_empty()) {
+        if bin.contains(std::path::MAIN_SEPARATOR) || Path::new(bin).is_absolute() {
+            return Some(bin.to_string());
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let bin = codex_bin
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .unwrap_or("codex");
+        let mut command = tokio_command("sh");
+        command.arg("-lc");
+        command.arg(format!("command -v {}", shell_words::quote(bin)));
+        command.stdout(std::process::Stdio::piped());
+        command.stderr(std::process::Stdio::null());
+        let output = timeout(Duration::from_secs(3), command.output())
+            .await
+            .ok()?
+            .ok()?;
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path.is_empty() {
+                return Some(path);
+            }
+        }
+    }
+
+    None
+}
+
 pub(crate) async fn codex_update_core(
     app_settings: &Mutex<AppSettings>,
     codex_bin: Option<String>,
@@ -166,6 +204,7 @@ pub(crate) async fn codex_update_core(
         .await
         .ok()
         .flatten();
+    let resolved_path = resolve_codex_command_path(resolved.as_deref()).await;
 
     let (method, package, upgrade_ok, output, upgraded) = if detect_brew_cask("codex").await? {
         let (ok, output) = run_brew_upgrade(&["--cask", "codex"]).await?;
@@ -196,11 +235,22 @@ pub(crate) async fn codex_update_core(
             output,
             ok,
         )
+    } else if resolved_path
+        .as_deref()
+        .is_some_and(looks_like_desktop_app_cli)
+    {
+        (
+            "desktop_app".to_string(),
+            Some("Codex.app".to_string()),
+            false,
+            String::new(),
+            false,
+        )
     } else {
         ("unknown".to_string(), None, false, String::new(), false)
     };
 
-    let after_version = if method == "unknown" {
+    let after_version = if method == "unknown" || method == "desktop_app" {
         None
     } else {
         match check_codex_installation(resolved.clone()).await {
@@ -221,8 +271,16 @@ pub(crate) async fn codex_update_core(
         }
     };
 
-    let details = if method == "unknown" {
-        Some("Unable to detect Codex installation method (brew/npm).".to_string())
+    let details = if method == "desktop_app" {
+        Some(
+            "当前使用的是 Codex 桌面 App 内置 CLI，请通过 Codex App 的更新入口更新。"
+                .to_string(),
+        )
+    } else if method == "unknown" {
+        Some(
+            "无法识别 Codex 的安装方式；自动更新目前只支持 Homebrew 或 npm 安装。"
+                .to_string(),
+        )
     } else if upgrade_ok {
         None
     } else {

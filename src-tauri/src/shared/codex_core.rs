@@ -593,12 +593,180 @@ pub(crate) async fn start_review_core(
 
 pub(crate) async fn model_list_core(
     sessions: &Mutex<HashMap<String, Arc<WorkspaceSession>>>,
+    workspaces: &Mutex<HashMap<String, WorkspaceEntry>>,
     workspace_id: String,
+    cursor: Option<String>,
+    limit: Option<u32>,
+    include_hidden: Option<bool>,
 ) -> Result<Value, String> {
     let session = get_session_clone(sessions, &workspace_id).await?;
-    session
-        .send_request_for_workspace(&workspace_id, "model/list", json!({}))
+    let mut params = Map::new();
+    if let Some(cursor) = cursor.as_ref() {
+        params.insert("cursor".to_string(), json!(cursor));
+    }
+    if let Some(limit) = limit {
+        params.insert("limit".to_string(), json!(limit));
+    }
+    if let Some(include_hidden) = include_hidden {
+        params.insert("includeHidden".to_string(), json!(include_hidden));
+    }
+    let response = session
+        .send_request_for_workspace(&workspace_id, "model/list", Value::Object(params))
+        .await?;
+    let should_merge_provider_models =
+        cursor.is_none() && matches!(include_hidden, Some(true));
+    if !should_merge_provider_models {
+        return Ok(response);
+    }
+    let codex_home =
+        resolve_codex_home_for_workspace_core(workspaces, &workspace_id).await.ok();
+    let provider_models = fetch_provider_models_from_models_endpoint(codex_home.as_deref())
         .await
+        .unwrap_or_default();
+    Ok(merge_provider_models(response, provider_models))
+}
+
+fn config_provider_endpoint(codex_home: &Path) -> Option<(String, Option<String>)> {
+    let (_, document) = crate::shared::config_toml_core::load_global_config_document(codex_home).ok()?;
+    let provider = crate::shared::config_toml_core::read_top_level_string(
+        &document,
+        "model_provider",
+    )?;
+    let provider_table = document
+        .get("model_providers")
+        .and_then(toml_edit::Item::as_table_like)?
+        .get(provider.as_str())
+        .and_then(toml_edit::Item::as_table_like)?;
+    let base_url = provider_table
+        .get("base_url")
+        .and_then(toml_edit::Item::as_str)?
+        .trim()
+        .trim_end_matches('/')
+        .to_string();
+    if !(base_url.starts_with("http://") || base_url.starts_with("https://")) {
+        return None;
+    }
+    let env_key = provider_table
+        .get("env_key")
+        .and_then(toml_edit::Item::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string);
+    Some((format!("{base_url}/models"), env_key))
+}
+
+fn auth_api_key(codex_home: &Path) -> Option<String> {
+    let auth_path = codex_home.join("auth.json");
+    let data = std::fs::read(auth_path).ok()?;
+    let auth: Value = serde_json::from_slice(&data).ok()?;
+    for key in ["OPENAI_API_KEY", "openai_api_key", "api_key", "apiKey"] {
+        if let Some(value) = auth.get(key).and_then(Value::as_str) {
+            let trimmed = value.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+    }
+    None
+}
+
+async fn fetch_provider_models_from_models_endpoint(
+    codex_home: Option<&Path>,
+) -> Result<Vec<Value>, String> {
+    let Some(codex_home) = codex_home else {
+        return Ok(Vec::new());
+    };
+    let Some((url, env_key)) = config_provider_endpoint(codex_home) else {
+        return Ok(Vec::new());
+    };
+    let api_key = env_key
+        .as_deref()
+        .and_then(|key| std::env::var(key).ok())
+        .filter(|value| !value.trim().is_empty())
+        .or_else(|| auth_api_key(codex_home));
+    let Some(api_key) = api_key else {
+        return Ok(Vec::new());
+    };
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(8))
+        .build()
+        .map_err(|err| err.to_string())?;
+    let response = client
+        .get(url)
+        .bearer_auth(api_key)
+        .send()
+        .await
+        .map_err(|err| err.to_string())?;
+    if !response.status().is_success() {
+        return Ok(Vec::new());
+    }
+    let body = response.text().await.map_err(|err| err.to_string())?;
+    let value: Value = serde_json::from_str(&body).map_err(|err| err.to_string())?;
+    Ok(value
+        .get("data")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default())
+}
+
+fn provider_model_value(model_id: &str) -> Value {
+    json!({
+        "id": model_id,
+        "model": model_id,
+        "upgrade": null,
+        "upgradeInfo": null,
+        "availabilityNux": null,
+        "displayName": model_id,
+        "description": "Provider /models",
+        "hidden": false,
+        "supportedReasoningEfforts": [],
+        "defaultReasoningEffort": null,
+        "inputModalities": [],
+        "supportsPersonality": false,
+        "additionalSpeedTiers": [],
+        "serviceTiers": [],
+        "defaultServiceTier": null,
+        "isDefault": false,
+    })
+}
+
+fn model_key(value: &Value) -> Option<String> {
+    value
+        .get("model")
+        .or_else(|| value.get("id"))
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string)
+}
+
+fn merge_provider_models(mut response: Value, provider_models: Vec<Value>) -> Value {
+    if provider_models.is_empty() {
+        return response;
+    }
+    let has_result = response.get("result").is_some();
+    let result = if has_result {
+        response.get_mut("result").and_then(Value::as_object_mut)
+    } else {
+        response.as_object_mut()
+    };
+    let Some(result) = result else {
+        return response;
+    };
+    let Some(data) = result.get_mut("data").and_then(Value::as_array_mut) else {
+        return response;
+    };
+
+    let mut seen: HashSet<String> = data.iter().filter_map(model_key).collect();
+    for provider_model in provider_models {
+        let Some(model_id) = model_key(&provider_model) else {
+            continue;
+        };
+        if seen.insert(model_id.clone()) {
+            data.push(provider_model_value(model_id.as_str()));
+        }
+    }
+    response
 }
 
 pub(crate) async fn experimental_feature_list_core(

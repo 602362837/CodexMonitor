@@ -60,11 +60,11 @@ type GitStatusSummary = {
 
 function buildGitStatusText(gitStatus: GitStatusSummary) {
   if (gitStatus.error) {
-    return "Git status unavailable";
+    return "Git 状态不可用";
   }
   return gitStatus.files.length > 0
     ? `${gitStatus.files.length} file${gitStatus.files.length === 1 ? "" : "s"} changed`
-    : "Working tree clean";
+    : "工作树干净";
 }
 
 function resolveShouldLoadGitHubPanelData({

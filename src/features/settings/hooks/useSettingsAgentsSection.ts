@@ -111,7 +111,7 @@ export const useSettingsAgentsSection = ({
       const response = await getAgentsSettings();
       setSettings(response);
     } catch (refreshError) {
-      setError(toErrorMessage(refreshError, "Unable to load agents settings."));
+      setError(toErrorMessage(refreshError, "无法加载 agents 设置。"));
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +138,7 @@ export const useSettingsAgentsSection = ({
         setSettings(response);
         return true;
       } catch (updateError) {
-        setError(toErrorMessage(updateError, "Unable to update agents core settings."));
+        setError(toErrorMessage(updateError, "无法更新 agents 核心设置。"));
         return false;
       } finally {
         setIsUpdatingCore(false);
@@ -193,7 +193,7 @@ export const useSettingsAgentsSection = ({
         setSettings(response);
         return true;
       } catch (createError) {
-        setError(toErrorMessage(createError, "Unable to create agent."));
+        setError(toErrorMessage(createError, "无法创建 agent。"));
         return false;
       } finally {
         setCreatingAgent(false);
@@ -217,7 +217,7 @@ export const useSettingsAgentsSection = ({
         setSettings(response);
         return true;
       } catch (updateError) {
-        setError(toErrorMessage(updateError, "Unable to update agent."));
+        setError(toErrorMessage(updateError, "无法更新 agent。"));
         return false;
       } finally {
         setUpdatingAgentName((current) =>
@@ -240,7 +240,7 @@ export const useSettingsAgentsSection = ({
         setSettings(response);
         return true;
       } catch (deleteError) {
-        setError(toErrorMessage(deleteError, "Unable to delete agent."));
+        setError(toErrorMessage(deleteError, "无法删除 agent。"));
         return false;
       } finally {
         setDeletingAgentName((current) => (current === input.name ? null : current));
@@ -255,7 +255,7 @@ export const useSettingsAgentsSection = ({
     try {
       return await readAgentConfigToml(agentName);
     } catch (readError) {
-      setError(toErrorMessage(readError, "Unable to read agent config file."));
+      setError(toErrorMessage(readError, "无法读取 agent 配置文件。"));
       return null;
     } finally {
       setReadingConfigAgentName((current) =>
@@ -273,7 +273,7 @@ export const useSettingsAgentsSection = ({
         await refresh();
         return true;
       } catch (writeError) {
-        setError(toErrorMessage(writeError, "Unable to write agent config file."));
+        setError(toErrorMessage(writeError, "无法写入 agent 配置文件。"));
         return false;
       } finally {
         setWritingConfigAgentName((current) =>
@@ -293,7 +293,7 @@ export const useSettingsAgentsSection = ({
       const descriptionSeed = seed.description.trim();
       const developerInstructionsSeed = seed.developerInstructions.trim();
       if (!sourceWorkspaceId || !sourceWorkspaceName) {
-        setError("Add a workspace before generating agent configuration.");
+        setError("生成 agent 配置前请先添加工作区。");
         return null;
       }
 
@@ -310,7 +310,7 @@ export const useSettingsAgentsSection = ({
       const effectivePromptSeed =
         promptSeed.length > 0
           ? promptSeed
-          : "Create a practical custom coding agent configuration.";
+          : "创建一个实用的自定义 coding agent 配置。";
 
       setGeneratingDescriptionTarget(target);
       setError(null);
@@ -322,7 +322,7 @@ export const useSettingsAgentsSection = ({
         const nextDescription = generated.description.trim();
         const nextInstructions = generated.developerInstructions.trim();
         if (!nextDescription && !nextInstructions) {
-          setError("Generated agent configuration was empty.");
+          setError("生成的 agent 配置为空。");
           return null;
         }
         return {
@@ -330,7 +330,7 @@ export const useSettingsAgentsSection = ({
           developerInstructions: nextInstructions,
         };
       } catch (generateError) {
-        setError(toErrorMessage(generateError, "Unable to generate agent configuration."));
+        setError(toErrorMessage(generateError, "无法生成 agent 配置。"));
         return null;
       } finally {
         setGeneratingDescriptionTarget((current) =>

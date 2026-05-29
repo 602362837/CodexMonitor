@@ -25,7 +25,7 @@ const allowedPersonality = new Set(["friendly", "pragmatic"]);
 const allowedFollowUpMessageBehavior = new Set(["queue", "steer"]);
 const DEFAULT_REMOTE_BACKEND_HOST = "127.0.0.1:4732";
 const DEFAULT_REMOTE_BACKEND_ID = "remote-default";
-const DEFAULT_REMOTE_BACKEND_NAME = "Primary remote";
+const DEFAULT_REMOTE_BACKEND_NAME = "主要远程后端";
 const DEFAULT_REMOTE_PROVIDER: AppSettings["remoteBackendProvider"] = "tcp";
 
 type RemoteBackendTarget = AppSettings["remoteBackends"][number];

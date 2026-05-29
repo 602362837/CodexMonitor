@@ -101,7 +101,7 @@ export function parseShortcut(value: string | null | undefined): ShortcutDefinit
 
 export function formatShortcut(value: string | null | undefined): string {
   if (!value) {
-    return "Not set";
+    return "未设置";
   }
   const parsed = parseShortcut(value);
   if (!parsed) {

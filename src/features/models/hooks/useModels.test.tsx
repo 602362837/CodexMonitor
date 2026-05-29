@@ -86,6 +86,62 @@ describe("useModels", () => {
     expect(result.current.reasoningSupported).toBe(true);
   });
 
+  it("loads all model/list pages with hidden models included", async () => {
+    vi.mocked(getModelList)
+      .mockResolvedValueOnce({
+        result: {
+          data: [
+            {
+              id: "remote-1",
+              model: "gpt-5.1",
+              displayName: "GPT-5.1",
+              supportedReasoningEfforts: [],
+              defaultReasoningEffort: null,
+              isDefault: true,
+            },
+          ],
+          nextCursor: "page-2",
+        },
+      })
+      .mockResolvedValueOnce({
+        result: {
+          data: [
+            {
+              id: "remote-2",
+              model: "gpt-5.2",
+              displayName: "GPT-5.2",
+              supportedReasoningEfforts: [],
+              defaultReasoningEffort: null,
+              isDefault: false,
+            },
+          ],
+          nextCursor: null,
+        },
+      });
+    vi.mocked(getConfigModel).mockResolvedValueOnce(null);
+
+    const { result } = renderHook(() =>
+      useModels({ activeWorkspace: workspace }),
+    );
+
+    await waitFor(() => expect(result.current.models).toHaveLength(2));
+
+    expect(getModelList).toHaveBeenNthCalledWith(
+      1,
+      "workspace-1",
+      expect.objectContaining({ cursor: null, includeHidden: true, limit: 200 }),
+    );
+    expect(getModelList).toHaveBeenNthCalledWith(
+      2,
+      "workspace-1",
+      expect.objectContaining({
+        cursor: "page-2",
+        includeHidden: true,
+        limit: 200,
+      }),
+    );
+  });
+
   it("keeps the selected reasoning effort when switching models", async () => {
     vi.mocked(getModelList).mockResolvedValueOnce({
       result: {

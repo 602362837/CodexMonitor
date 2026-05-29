@@ -155,7 +155,7 @@ export const useSettingsFeaturesSection = ({
       await revealItemInDir(configPath);
     } catch (error) {
       setOpenConfigError(
-        error instanceof Error ? error.message : "Unable to open config.",
+        error instanceof Error ? error.message : "无法打开配置。",
       );
     }
   }, []);
@@ -210,7 +210,7 @@ export const useSettingsFeaturesSection = ({
         setFeatureError(
           error instanceof Error
             ? error.message
-            : "Unable to load Codex feature flags.",
+            : "无法加载 Codex feature flags。",
         );
       } finally {
         if (active) {

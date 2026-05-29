@@ -171,7 +171,7 @@ export function parseReasoning(
     ? cleanTitle.length > 80
       ? `${cleanTitle.slice(0, 80)}…`
       : cleanTitle
-    : "Reasoning";
+    : "推理";
   const summaryLines = summary.split("\n");
   const contentLines = content.split("\n");
   const summaryBody =
@@ -344,7 +344,7 @@ export function buildToolSummary(
     const cleanedCommand = cleanCommandText(commandText);
     return {
       label: "command",
-      value: cleanedCommand || "Command",
+      value: cleanedCommand || "命令",
       detail: "",
       output: item.output || "",
     };

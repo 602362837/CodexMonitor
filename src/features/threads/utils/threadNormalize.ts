@@ -186,9 +186,9 @@ export function extractRpcErrorMessage(response: unknown) {
   }
   if (typeof errorValue === "object" && errorValue) {
     const message = asString((errorValue as Record<string, unknown>).message);
-    return message || "Request failed.";
+    return message || "请求失败。";
   }
-  return "Request failed.";
+  return "请求失败。";
 }
 
 export function extractReviewThreadId(response: unknown): string | null {

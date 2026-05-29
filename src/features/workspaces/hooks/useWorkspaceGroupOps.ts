@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { AppSettings, WorkspaceGroup, WorkspaceInfo, WorkspaceSettings } from "../../../types";
 import {
-  RESERVED_GROUP_NAME,
+  DISPLAY_UNGROUPED_LABEL,
   createGroupId,
   isDuplicateGroupName,
   isReservedGroupName,
@@ -49,14 +49,14 @@ export function useWorkspaceGroupOps({
       }
       const trimmed = normalizeGroupName(name);
       if (!trimmed) {
-        throw new Error("Group name is required.");
+        throw new Error("分组名称不能为空。");
       }
       if (isReservedGroupName(trimmed)) {
-        throw new Error(`"${RESERVED_GROUP_NAME}" is reserved.`);
+        throw new Error(`“${DISPLAY_UNGROUPED_LABEL}”是保留名称。`);
       }
       const currentGroups = appSettings.workspaceGroups ?? [];
       if (isDuplicateGroupName(trimmed, currentGroups)) {
-        throw new Error("Group name already exists.");
+        throw new Error("分组名称已存在。");
       }
       const nextSortOrder =
         currentGroups.reduce((max, group) => {
@@ -84,14 +84,14 @@ export function useWorkspaceGroupOps({
       }
       const trimmed = normalizeGroupName(name);
       if (!trimmed) {
-        throw new Error("Group name is required.");
+        throw new Error("分组名称不能为空。");
       }
       if (isReservedGroupName(trimmed)) {
-        throw new Error(`"${RESERVED_GROUP_NAME}" is reserved.`);
+        throw new Error(`“${DISPLAY_UNGROUPED_LABEL}”是保留名称。`);
       }
       const currentGroups = appSettings.workspaceGroups ?? [];
       if (isDuplicateGroupName(trimmed, currentGroups, groupId)) {
-        throw new Error("Group name already exists.");
+        throw new Error("分组名称已存在。");
       }
       const nextGroups = currentGroups.map((group) =>
         group.id === groupId ? { ...group, name: trimmed } : group,

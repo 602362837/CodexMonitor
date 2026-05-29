@@ -9,7 +9,7 @@ import {
 } from "../../../services/tauri";
 
 const WORKTREE_SETUP_TERMINAL_ID = "worktree-setup";
-const WORKTREE_SETUP_TERMINAL_TITLE = "Setup";
+const WORKTREE_SETUP_TERMINAL_TITLE = "设置";
 const DEFAULT_TERMINAL_COLS = 120;
 const DEFAULT_TERMINAL_ROWS = 32;
 

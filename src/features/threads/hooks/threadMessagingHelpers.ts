@@ -63,18 +63,18 @@ export function buildReviewThreadTitle(target: ReviewTarget): string | null {
     const shortSha = target.sha.trim().slice(0, 7);
     const title = target.title?.trim() ?? "";
     if (shortSha && title) {
-      return clampThreadName(`Review ${shortSha}: ${title}`);
+      return clampThreadName(`审核 ${shortSha}: ${title}`);
     }
     if (shortSha) {
-      return clampThreadName(`Review ${shortSha}`);
+      return clampThreadName(`审核 ${shortSha}`);
     }
-    return clampThreadName("Review Commit");
+    return clampThreadName("审核提交");
   }
   if (target.type === "baseBranch") {
-    return clampThreadName(`Review ${target.branch}`);
+    return clampThreadName(`审核 ${target.branch}`);
   }
   if (target.type === "uncommittedChanges") {
-    return "Review Working Tree";
+    return "审核工作树";
   }
   return null;
 }
@@ -230,12 +230,12 @@ export function buildStatusLines({
   rateLimits: RateLimitSnapshot | null;
 }): string[] {
   const lines = [
-    "Session status:",
-    `- Model: ${model ?? "default"}`,
-    `- Fast mode: ${serviceTier === "fast" ? "on" : "off"}`,
-    `- Reasoning effort: ${effort ?? "default"}`,
-    `- Access: ${accessMode ?? "current"}`,
-    `- Collaboration: ${getCollaborationModeId(collaborationMode) || "off"}`,
+    "会话状态：",
+    `- 模型：${model ?? "默认"}`,
+    `- Fast 模式：${serviceTier === "fast" ? "开启" : "关闭"}`,
+    `- 推理强度：${effort ?? "默认"}`,
+    `- 访问权限：${accessMode ?? "当前"}`,
+    `- 协作：${getCollaborationModeId(collaborationMode) || "关闭"}`,
   ];
 
   const primaryUsed = rateLimits?.primary?.usedPercent;
@@ -245,7 +245,7 @@ export function buildStatusLines({
     const reset = resetLabel(rateLimits?.primary?.resetsAt);
     lines.push(
       `- Session usage: ${Math.round(primaryUsed)}%${
-        reset ? ` (resets ${reset})` : ""
+        reset ? `（${reset}重置）` : ""
       }`,
     );
   }
@@ -253,7 +253,7 @@ export function buildStatusLines({
     const reset = resetLabel(rateLimits?.secondary?.resetsAt);
     lines.push(
       `- Weekly usage: ${Math.round(secondaryUsed)}%${
-        reset ? ` (resets ${reset})` : ""
+        reset ? `（${reset}重置）` : ""
       }`,
     );
   }
@@ -261,9 +261,9 @@ export function buildStatusLines({
   const credits = rateLimits?.credits ?? null;
   if (credits?.hasCredits) {
     if (credits.unlimited) {
-      lines.push("- Credits: unlimited");
+      lines.push("- Credits：无限");
     } else if (credits.balance) {
-      lines.push(`- Credits: ${credits.balance}`);
+      lines.push(`- Credits：${credits.balance}`);
     }
   }
 
@@ -273,9 +273,9 @@ export function buildStatusLines({
 export function buildMcpStatusLines(
   data: Array<Record<string, unknown>>,
 ): string[] {
-  const lines: string[] = ["MCP tools:"];
+  const lines: string[] = ["MCP 工具："];
   if (data.length === 0) {
-    lines.push("- No MCP servers configured.");
+    lines.push("- 未配置 MCP 服务器。");
     return lines;
   }
 
@@ -291,7 +291,7 @@ export function buildMcpStatusLines(
         : authStatus && typeof authStatus === "object" && "status" in authStatus
           ? String((authStatus as { status?: unknown }).status ?? "")
           : "";
-    lines.push(`- ${name}${authLabel ? ` (auth: ${authLabel})` : ""}`);
+    lines.push(`- ${name}${authLabel ? `（认证：${authLabel}）` : ""}`);
 
     const toolsRecord =
       server.tools && typeof server.tools === "object"
@@ -305,8 +305,8 @@ export function buildMcpStatusLines(
       .sort((a, b) => a.localeCompare(b));
     lines.push(
       toolNames.length > 0
-        ? `  tools: ${toolNames.join(", ")}`
-        : "  tools: none",
+        ? `  工具：${toolNames.join(", ")}`
+        : "  工具：无",
     );
 
     const resources = Array.isArray(server.resources) ? server.resources.length : 0;
@@ -316,7 +316,7 @@ export function buildMcpStatusLines(
         ? server.resource_templates.length
         : 0;
     if (resources > 0 || templates > 0) {
-      lines.push(`  resources: ${resources}, templates: ${templates}`);
+      lines.push(`  资源：${resources}，模板：${templates}`);
     }
   }
 
@@ -324,9 +324,9 @@ export function buildMcpStatusLines(
 }
 
 export function buildAppsLines(data: Array<Record<string, unknown>>): string[] {
-  const lines: string[] = ["Apps:"];
+  const lines: string[] = ["应用："];
   if (data.length === 0) {
-    lines.push("- No apps available.");
+    lines.push("- 没有可用应用。");
     return lines;
   }
 
@@ -337,7 +337,7 @@ export function buildAppsLines(data: Array<Record<string, unknown>>): string[] {
     const name = String(app.name ?? app.id ?? "unknown");
     const appId = String(app.id ?? "");
     const isAccessible = Boolean(app.isAccessible ?? app.is_accessible ?? false);
-    const status = isAccessible ? "connected" : "can be installed";
+    const status = isAccessible ? "已连接" : "可安装";
     const description =
       typeof app.description === "string" && app.description.trim().length > 0
         ? app.description.trim()
@@ -353,7 +353,7 @@ export function buildAppsLines(data: Array<Record<string, unknown>>): string[] {
           ? app.install_url
           : "";
     if (!isAccessible && installUrl) {
-      lines.push(`  install: ${installUrl}`);
+      lines.push(`  安装：${installUrl}`);
     }
   }
 

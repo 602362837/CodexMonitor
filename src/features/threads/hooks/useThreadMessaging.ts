@@ -307,7 +307,7 @@ export function useThreadMessaging({
         if (!turnId) {
           markProcessing(threadId, false);
           setActiveTurnId(threadId, null);
-          pushThreadErrorMessage(threadId, "Turn failed to start.");
+          pushThreadErrorMessage(threadId, "本轮启动失败。");
           safeMessageActivity();
           return { status: "blocked" };
         }
@@ -439,7 +439,7 @@ export function useThreadMessaging({
     dispatch({
       type: "addAssistantMessage",
       threadId: activeThreadId,
-      text: "Session stopped.",
+      text: "会话已停止。",
     });
     if (!activeTurnId) {
       pendingInterruptsRef.current.add(activeThreadId);
@@ -710,7 +710,7 @@ export function useThreadMessaging({
       let message = "";
 
       if (action === "invalid") {
-        message = "Usage: /fast, /fast on, /fast off, or /fast status.";
+        message = "用法：/fast、/fast on、/fast off 或 /fast status。";
       } else if (action === "status") {
         message = `Fast mode is ${isEnabled ? "on" : "off"}.`;
       } else {
@@ -779,7 +779,7 @@ export function useThreadMessaging({
         });
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Failed to load MCP status.";
+          error instanceof Error ? error.message : "加载 MCP 状态失败。";
         dispatch({
           type: "addAssistantMessage",
           threadId,
@@ -832,7 +832,7 @@ export function useThreadMessaging({
         });
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Failed to load apps.";
+          error instanceof Error ? error.message : "加载应用失败。";
         dispatch({
           type: "addAssistantMessage",
           threadId,
@@ -917,7 +917,7 @@ export function useThreadMessaging({
           threadId,
           error instanceof Error
             ? error.message
-            : "Failed to start context compaction.",
+            : "启动上下文压缩失败。",
         );
       } finally {
         safeMessageActivity();

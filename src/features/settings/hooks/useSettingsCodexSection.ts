@@ -216,7 +216,7 @@ export const useSettingsCodexSection = ({
             afterVersion: null,
             upgraded: false,
             output: null,
-            details: "Codex updates are not available in this build.",
+            details: "此构建不支持 Codex 更新。",
           },
         });
         return;

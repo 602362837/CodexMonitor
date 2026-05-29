@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseModelListResponse } from "./modelListResponse";
+import {
+  extractModelListNextCursor,
+  parseModelListResponse,
+} from "./modelListResponse";
 
 describe("parseModelListResponse", () => {
   it("uses displayName when present", () => {
@@ -56,5 +59,13 @@ describe("parseModelListResponse", () => {
     const models = parseModelListResponse(response);
     expect(models[0].displayName).toBe("GPT-5.3-Codex-Spark");
     expect(models[1].displayName).toBe("gpt-5.2-codex");
+  });
+
+  it("extracts nextCursor from model list pages", () => {
+    expect(
+      extractModelListNextCursor({
+        result: { data: [], nextCursor: "cursor-2" },
+      }),
+    ).toBe("cursor-2");
   });
 });

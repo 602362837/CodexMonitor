@@ -61,7 +61,7 @@ function buildCompactEmptyNode({
       <h3>{title}</h3>
       <p>{description}</p>
       <button className="ghost" onClick={onGoProjects}>
-        Go to Projects
+        前往项目
       </button>
     </div>
   );
@@ -81,7 +81,7 @@ function buildCompactGitBackNode(
         className={`compact-git-switch-button${compactGitDiffActive ? "" : " active"}`}
         onClick={compactNavProps.onBackFromDiff}
       >
-        Files
+        文件
       </button>
       <button
         type="button"
@@ -109,14 +109,14 @@ export function buildSecondaryNodes(options: SecondaryLayoutNodesOptions): Secon
   const { debugPanelNode, debugPanelFullNode } = buildDebugPanels(options.debugPanelProps);
 
   const compactEmptyCodexNode = buildCompactEmptyNode({
-    title: "No workspace selected",
-    description: "Choose a project to start chatting.",
+    title: "未选择工作区",
+    description: "选择一个项目以开始聊天。",
     onGoProjects: options.compactNavProps.onGoProjects,
   });
 
   const compactEmptyGitNode = buildCompactEmptyNode({
-    title: "No workspace selected",
-    description: "Select a project to inspect diffs.",
+    title: "未选择工作区",
+    description: "选择一个项目以查看 diffs。",
     onGoProjects: options.compactNavProps.onGoProjects,
   });
 

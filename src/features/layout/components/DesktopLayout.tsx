@@ -146,7 +146,7 @@ export function DesktopLayout({
         className="sidebar-resizer"
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize sidebar"
+        aria-label="调整侧边栏宽度"
         onMouseDown={onSidebarResizeStart}
       />
 
@@ -176,7 +176,7 @@ export function DesktopLayout({
                     className="content-split-resizer"
                     role="separator"
                     aria-orientation="vertical"
-                    aria-label="Resize chat/diff split"
+                    aria-label="调整聊天/diff 分割"
                     onMouseDown={onChatDiffSplitPositionResizeStart}
                   />
                   <div
@@ -222,7 +222,7 @@ export function DesktopLayout({
               className="right-panel-resizer"
               role="separator"
               aria-orientation="vertical"
-              aria-label="Resize right panel"
+              aria-label="调整右侧面板宽度"
               onMouseDown={onRightPanelResizeStart}
             />
             <div className={`right-panel ${hasActivePlan ? "" : "plan-collapsed"}`}>
@@ -232,7 +232,7 @@ export function DesktopLayout({
                 className="right-panel-divider"
                 role="separator"
                 aria-orientation="horizontal"
-                aria-label="Resize plan panel"
+                aria-label="调整计划面板高度"
                 onMouseDown={onPlanPanelResizeStart}
               />
               <div className="right-panel-bottom">{planPanelNode}</div>

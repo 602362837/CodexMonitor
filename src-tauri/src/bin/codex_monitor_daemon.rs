@@ -874,8 +874,22 @@ impl DaemonState {
             .await
     }
 
-    async fn model_list(&self, workspace_id: String) -> Result<Value, String> {
-        codex_core::model_list_core(&self.sessions, workspace_id).await
+    async fn model_list(
+        &self,
+        workspace_id: String,
+        cursor: Option<String>,
+        limit: Option<u32>,
+        include_hidden: Option<bool>,
+    ) -> Result<Value, String> {
+        codex_core::model_list_core(
+            &self.sessions,
+            &self.workspaces,
+            workspace_id,
+            cursor,
+            limit,
+            include_hidden,
+        )
+        .await
     }
 
     async fn experimental_feature_list(

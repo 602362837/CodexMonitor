@@ -7,9 +7,25 @@ All docs must be canonical, with no past commentary, only live state.
 This file is the agent contract for how to work in this repo.
 Detailed navigation/runbooks live in:
 
+- `docs/ai-index.md` (AI lookup index: what to read for each task shape)
+- `docs/architecture-spine.md` (architecture analysis: runtime layers, flows, and risk points)
 - `docs/codebase-map.md` (task-oriented file map: "if you need X, edit Y")
+- `docs/change-playbooks.md` (common change routes and validation commands)
 - `docs/multi-agent-sync-runbook.md` (upstream `../Codex` sync checklist for multi-agent/config behavior)
 - `README.md` (setup, build, release, and broader project docs)
+
+## AI Navigation Contract
+
+Treat this `AGENTS.md` file as the root soul file for the repo.
+Keep it concise and canonical; put detailed navigation under `docs/` and link to it from here.
+
+Recommended read order for AI agents:
+
+1. `AGENTS.md` for mandatory repo rules and invariants.
+2. `docs/ai-index.md` for task-to-document routing.
+3. `docs/architecture-spine.md` for the project shape and cross-runtime boundaries.
+4. `docs/codebase-map.md` for task-oriented file lookup.
+5. `docs/change-playbooks.md` for concrete implementation routes.
 
 ## Project Snapshot
 
@@ -164,6 +180,9 @@ Use extra care in high-churn/high-complexity files:
 
 ## Canonical References
 
+- AI task routing index: `docs/ai-index.md`
+- Architecture spine: `docs/architecture-spine.md`
 - Task-oriented code map: `docs/codebase-map.md`
+- Change playbooks: `docs/change-playbooks.md`
 - Multi-agent upstream sync runbook: `docs/multi-agent-sync-runbook.md`
 - Setup/build/release/test commands: `README.md`

@@ -138,8 +138,8 @@ export function useGitActions({
       return;
     }
     const confirmed = await ask(
-      "Revert all changes in this repo?\n\nThis will discard all staged and unstaged changes, including untracked files.",
-      { title: "Revert all changes", kind: "warning" },
+      "要还原此仓库中的所有改动吗？\n\n这会丢弃所有已暂存和未暂存改动，包括未跟踪文件。",
+      { title: "还原所有改动", kind: "warning" },
     );
     if (!confirmed) {
       return;
@@ -211,10 +211,10 @@ export function useGitActions({
         const confirmed = await ask(
           `Initialize Git in this folder?\n\nThis will create a .git directory, set the initial branch to "${branch}", and create an initial commit.\n\nThis folder contains ${entryCount} existing item${plural}.`,
           {
-            title: "Initialize Git",
+            title: "初始化 Git",
             kind: "warning",
-            okLabel: "Initialize",
-            cancelLabel: "Cancel",
+            okLabel: "初始化",
+            cancelLabel: "取消",
           },
         );
         if (!confirmed) {
@@ -268,7 +268,7 @@ export function useGitActions({
       branch: string,
     ): Promise<{ ok: true } | { ok: false; error: string }> => {
       if (!workspaceId) {
-        return { ok: false, error: "No active workspace." };
+        return { ok: false, error: "没有当前工作区。" };
       }
 
       const actionWorkspaceId = workspaceId;
@@ -281,7 +281,7 @@ export function useGitActions({
           branch,
         );
         if (workspaceIdRef.current !== actionWorkspaceId) {
-          return { ok: false, error: "Workspace changed." };
+          return { ok: false, error: "工作区已变化。" };
         }
 
         if (response.status === "ok") {
@@ -298,11 +298,11 @@ export function useGitActions({
           parts.push(`Failed to set default branch:\n${defaultBranchError}`);
         }
         const errorMessage =
-          parts.length > 0 ? parts.join("\n\n") : "Remote repo was created, but setup was incomplete.";
+          parts.length > 0 ? parts.join("\n\n") : "远端仓库已创建，但设置未完成。";
         return { ok: false, error: errorMessage };
       } catch (error) {
         if (workspaceIdRef.current !== actionWorkspaceId) {
-          return { ok: false, error: "Workspace changed." };
+          return { ok: false, error: "工作区已变化。" };
         }
         return {
           ok: false,

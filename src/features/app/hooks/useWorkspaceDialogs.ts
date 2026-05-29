@@ -184,7 +184,7 @@ export function useWorkspaceDialogs() {
         prev
           ? {
               ...prev,
-              error: "Enter at least one absolute directory path.",
+              error: "请输入至少一个绝对目录路径。",
             }
           : prev,
       );
@@ -248,14 +248,14 @@ export function useWorkspaceDialogs() {
           details.push(`- …and ${result.failures.length - 3} more`);
         }
         lines.push("");
-        lines.push("Failures:");
+        lines.push("失败项：");
         lines.push(...details);
       }
 
       const title =
         result.failures.length > 0
-          ? "Some workspaces failed to add"
-          : "Some workspaces were skipped";
+          ? "部分工作区添加失败"
+          : "部分工作区已跳过";
       await message(lines.join("\n"), {
         title,
         kind: result.failures.length > 0 ? "error" : "warning",
@@ -281,10 +281,10 @@ export function useWorkspaceDialogs() {
       return ask(
         `Are you sure you want to delete "${workspaceName}"?\n\nThis will remove the workspace from CodexMonitor.${detail}`,
         {
-          title: "Delete Workspace",
+          title: "删除工作区",
           kind: "warning",
-          okLabel: "Delete",
-          cancelLabel: "Cancel",
+          okLabel: "删除",
+          cancelLabel: "取消",
         },
       );
     },
@@ -298,10 +298,10 @@ export function useWorkspaceDialogs() {
       return ask(
         `Are you sure you want to delete "${workspaceName}"?\n\nThis will close the agent, remove its worktree, and delete it from CodexMonitor.`,
         {
-          title: "Delete Worktree",
+          title: "删除工作树",
           kind: "warning",
-          okLabel: "Delete",
-          cancelLabel: "Cancel",
+          okLabel: "删除",
+          cancelLabel: "取消",
         },
       );
     },
@@ -311,7 +311,7 @@ export function useWorkspaceDialogs() {
   const showWorkspaceRemovalError = useCallback(async (error: unknown) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     await message(errorMessage, {
-      title: "Delete workspace failed",
+      title: "删除工作区失败",
       kind: "error",
     });
   }, []);
@@ -319,7 +319,7 @@ export function useWorkspaceDialogs() {
   const showWorktreeRemovalError = useCallback(async (error: unknown) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     await message(errorMessage, {
-      title: "Delete worktree failed",
+      title: "删除工作树失败",
       kind: "error",
     });
   }, []);

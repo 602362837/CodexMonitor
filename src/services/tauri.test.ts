@@ -23,6 +23,7 @@ import {
   readGlobalCodexConfigToml,
   listWorkspaces,
   openWorkspaceIn,
+  pullGit,
   readAgentMd,
   stageGitAll,
   respondToServerRequest,
@@ -421,6 +422,17 @@ describe("tauri invoke wrappers", () => {
 
     expect(invokeMock).toHaveBeenCalledWith("fetch_git", {
       workspaceId: "ws-7",
+    });
+  });
+
+  it("invokes pull_git", async () => {
+    const invokeMock = vi.mocked(invoke);
+    invokeMock.mockResolvedValueOnce({});
+
+    await pullGit("ws-8");
+
+    expect(invokeMock).toHaveBeenCalledWith("pull_git", {
+      workspaceId: "ws-8",
     });
   });
 

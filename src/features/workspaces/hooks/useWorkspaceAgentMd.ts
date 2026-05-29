@@ -84,7 +84,7 @@ export function useWorkspaceAgentMd({ activeWorkspace, onDebug }: UseWorkspaceAg
     key: workspaceId,
     read: readWithDebug,
     write: writeWithDebug,
-    readErrorTitle: "Couldn’t load AGENTS.md",
-    writeErrorTitle: "Couldn’t save AGENTS.md",
+    readErrorTitle: "无法加载 AGENTS.md",
+    writeErrorTitle: "无法保存 AGENTS.md",
   });
 }

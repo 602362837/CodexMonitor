@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DebugEntry, ModelOption, WorkspaceInfo } from "../../../types";
-import { getConfigModel, getModelList } from "../../../services/tauri";
+import { getConfigModel } from "../../../services/tauri";
+import { fetchCompleteModelList } from "../utils/fetchCompleteModelList";
 import {
   normalizeEffortValue,
   parseModelListResponse,
@@ -14,7 +15,7 @@ type UseModelsOptions = {
   selectionKey?: string | null;
 };
 
-const CONFIG_MODEL_DESCRIPTION = "Configured in CODEX_HOME/config.toml";
+const CONFIG_MODEL_DESCRIPTION = "在 CODEX_HOME/config.toml 中配置";
 
 const findModelByIdOrModel = (
   models: ModelOption[],
@@ -161,7 +162,7 @@ export function useModels({
     });
     try {
       const [modelListResult, configModelResult] = await Promise.allSettled([
-        getModelList(workspaceId),
+        fetchCompleteModelList(workspaceId),
         getConfigModel(workspaceId),
       ]);
       const configModelFromConfig =
@@ -202,7 +203,9 @@ export function useModels({
         payload: response,
       });
       setConfigModel(configModelFromConfig);
-      const dataFromServer: ModelOption[] = parseModelListResponse(response);
+      const dataFromServer: ModelOption[] = (
+        Array.isArray(response) ? response : [response]
+      ).flatMap((page) => parseModelListResponse(page));
       const data = (() => {
         if (!configModelFromConfig) {
           return dataFromServer;

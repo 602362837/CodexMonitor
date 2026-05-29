@@ -214,7 +214,7 @@ export function usePullRequestComposer({
       return [
         {
           id: "commit-review",
-          label: "Review Commit",
+          label: "审核提交",
           title: `Review commit ${shortSha}`,
           onSelect: async () => {
             await startReview(reviewCommand);
@@ -237,7 +237,7 @@ export function usePullRequestComposer({
     startReview,
   ]);
 
-  const composerSendLabel = isPullRequestComposer ? "Ask PR" : undefined;
+  const composerSendLabel = isPullRequestComposer ? "询问 PR" : undefined;
   const handleComposerSend = isPullRequestComposer
     ? handleSendPullRequestQuestion
     : handleSend;

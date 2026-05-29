@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import type { DragEvent, MouseEvent, ReactNode } from "react";
 
 import type { WorkspaceInfo } from "../../../types";
 
@@ -20,7 +20,12 @@ type WorkspaceCardProps = {
     left: number;
     width: number;
   } | null) => void;
-  children?: React.ReactNode;
+  onWorkspaceDragStart?: (
+    event: DragEvent<HTMLDivElement>,
+    workspace: WorkspaceInfo,
+  ) => void;
+  onWorkspaceDragEnd?: () => void;
+  children?: ReactNode;
 };
 
 export function WorkspaceCard({
@@ -36,12 +41,23 @@ export function WorkspaceCard({
   onToggleWorkspaceCollapse,
   onConnectWorkspace,
   onToggleAddMenu,
+  onWorkspaceDragStart,
+  onWorkspaceDragEnd,
   children,
 }: WorkspaceCardProps) {
   const contentCollapsedClass = isCollapsed ? " collapsed" : "";
 
   return (
-    <div className="workspace-card">
+    <div
+      className="workspace-card"
+      draggable={Boolean(onWorkspaceDragStart)}
+      onDragStart={
+        onWorkspaceDragStart
+          ? (event) => onWorkspaceDragStart(event, workspace)
+          : undefined
+      }
+      onDragEnd={onWorkspaceDragEnd}
+    >
       <div
         className={`workspace-row ${isActive ? "active" : ""}`}
         role="button"
@@ -66,7 +82,7 @@ export function WorkspaceCard({
                   onToggleWorkspaceCollapse(workspace.id, !isCollapsed);
                 }}
                 data-tauri-drag-region="false"
-                aria-label={isCollapsed ? "Show agents" : "Hide agents"}
+                aria-label={isCollapsed ? "显示 agents" : "隐藏 agents"}
                 aria-expanded={!isCollapsed}
               >
                 <span className="workspace-toggle-icon">›</span>
@@ -98,7 +114,7 @@ export function WorkspaceCard({
               );
             }}
             data-tauri-drag-region="false"
-            aria-label="Add agent options"
+            aria-label="添加 agent 选项"
             aria-expanded={addMenuOpen}
           >
             +
@@ -106,13 +122,13 @@ export function WorkspaceCard({
           {!workspace.connected && (
             <span
               className="connect"
-              title="Connect workspace context to the shared Codex server"
+              title="连接工作区上下文到共享 Codex server"
               onClick={(event) => {
                 event.stopPropagation();
                 onConnectWorkspace(workspace);
               }}
             >
-              connect
+              连接
             </span>
           )}
         </div>

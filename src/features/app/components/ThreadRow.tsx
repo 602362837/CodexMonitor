@@ -107,9 +107,9 @@ export function ThreadRow({
   );
   const statusLabel =
     statusClass === "reviewing"
-      ? "Reviewing"
+      ? "Review 中"
       : hasPendingUserInput
-        ? "Waiting"
+        ? "等待中"
         : null;
   const subagentLabel =
     thread.isSubagent && (thread.subagentNickname || thread.subagentRole)
@@ -197,7 +197,7 @@ export function ThreadRow({
                 {contextLabel}
               </span>
             )}
-            {showPinnedLabel && isPinned && <span className="thread-pinned-label">Pinned</span>}
+            {showPinnedLabel && isPinned && <span className="thread-pinned-label">置顶</span>}
           </div>
         )}
       </div>
@@ -211,10 +211,10 @@ export function ThreadRow({
               onToggleSubagents?.(workspaceId, thread.id);
             }}
             data-tauri-drag-region="false"
-            aria-label={subagentsExpanded ? "Hide sub-agents" : "Show sub-agents"}
+            aria-label={subagentsExpanded ? "隐藏子 agents" : "显示子 agents"}
             aria-expanded={subagentsExpanded}
           >
-            <span className="thread-subagent-time-label">{relativeTime ?? "Now"}</span>
+            <span className="thread-subagent-time-label">{relativeTime ?? "刚刚"}</span>
             <span className="thread-subagent-toggle-icon" aria-hidden>
               ›
             </span>

@@ -436,7 +436,7 @@ export function useThreadTurnEvents({
       setActiveTurnId(threadId, null);
       const message = payload.message
         ? `Turn failed: ${payload.message}`
-        : "Turn failed.";
+        : "本轮执行失败。";
       pushThreadErrorMessage(threadId, message);
       safeMessageActivity();
     },

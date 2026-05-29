@@ -134,11 +134,11 @@ export function GitDiffModeContent({
   const gitRootNotFound = isGitRootNotFound(error);
   const showInitGitRepo = Boolean(onInitGitRepo) && missingRepo && !gitRootNotFound;
   const gitRootTitle = gitRootNotFound
-    ? "Git root folder not found."
+    ? "未找到 Git 根目录。"
     : missingRepo
-      ? "This workspace isn't a Git repository yet."
-      : "Choose a repo for this workspace.";
-  const generateCommitMessageTooltip = "Generate commit message";
+      ? "此工作区还不是 Git 仓库。"
+      : "为此工作区选择一个仓库。";
+  const generateCommitMessageTooltip = "生成 commit message";
   const showWorktreeApplyInUnstaged = showApplyWorktree && unstagedFiles.length > 0;
   const showWorktreeApplyInStaged =
     showApplyWorktree && unstagedFiles.length === 0 && stagedFiles.length > 0;
@@ -158,7 +158,7 @@ export function GitDiffModeContent({
                 }}
                 disabled={initGitRepoLoading || gitRootScanLoading}
               >
-                {initGitRepoLoading ? "Initializing..." : "Initialize Git"}
+                {initGitRepoLoading ? "初始化中..." : "初始化 Git"}
               </button>
             </div>
           )}
@@ -169,10 +169,10 @@ export function GitDiffModeContent({
               onClick={onScanGitRoots}
               disabled={!onScanGitRoots || gitRootScanLoading || initGitRepoLoading}
             >
-              Scan workspace
+              扫描工作区
             </button>
             <label className="git-root-depth">
-              <span>Depth</span>
+              <span>深度</span>
               <select
                 className="git-root-select"
                 value={gitRootScanDepth}
@@ -200,7 +200,7 @@ export function GitDiffModeContent({
                 }}
                 disabled={gitRootScanLoading || initGitRepoLoading}
               >
-                Pick folder
+                选择文件夹
               </button>
             )}
             {hasGitRoot && onClearGitRoot && (
@@ -210,18 +210,18 @@ export function GitDiffModeContent({
                 onClick={onClearGitRoot}
                 disabled={gitRootScanLoading || initGitRepoLoading}
               >
-                Use workspace root
+                使用工作区根目录
               </button>
             )}
           </div>
           {gitRootScanLoading && (
-            <div className="diff-empty">Scanning for repositories...</div>
+            <div className="diff-empty">正在扫描仓库...</div>
           )}
           {!gitRootScanLoading &&
             !gitRootScanError &&
             gitRootScanHasScanned &&
             gitRootCandidates.length === 0 && (
-              <div className="diff-empty">No repositories found.</div>
+              <div className="diff-empty">没有找到仓库。</div>
             )}
           {gitRootCandidates.length > 0 && (
             <div className="git-root-list">
@@ -236,7 +236,7 @@ export function GitDiffModeContent({
                     onClick={() => onSelectGitRoot?.(path)}
                   >
                     <span className="git-root-path">{path}</span>
-                    {isActive && <span className="git-root-tag">Active</span>}
+                    {isActive && <span className="git-root-tag">当前</span>}
                   </button>
                 );
               })}
@@ -249,7 +249,7 @@ export function GitDiffModeContent({
           <div className="commit-message-input-wrapper">
             <textarea
               className="commit-message-input"
-              placeholder="Commit message..."
+              placeholder="提交信息..."
               value={commitMessage}
               onChange={(event) => onCommitMessageChange?.(event.target.value)}
               disabled={commitMessageLoading}
@@ -269,7 +269,7 @@ export function GitDiffModeContent({
               data-tooltip={generateCommitMessageTooltip}
               data-tooltip-placement="bottom"
               data-tooltip-align="end"
-              aria-label="Generate commit message"
+              aria-label="生成 commit message"
             >
               {commitMessageLoading ? (
                 <MagicSparkleLoaderIcon className="commit-message-loader" />
@@ -296,14 +296,14 @@ export function GitDiffModeContent({
                 className="push-button-secondary"
                 onClick={() => void onPull?.()}
                 disabled={!onPull || pullLoading || syncLoading}
-                title={`Pull ${commitsBehind} commit${commitsBehind > 1 ? "s" : ""}`}
+                title={`Pull ${commitsBehind} 个 commit`}
               >
                 {pullLoading ? (
                   <span className="commit-button-spinner" aria-hidden />
                 ) : (
                   <Download size={14} aria-hidden />
                 )}
-                <span>{pullLoading ? "Pulling..." : "Pull"}</span>
+                <span>{pullLoading ? "Pull 中..." : "Pull"}</span>
                 <span className="push-count">{commitsBehind}</span>
               </button>
             )}
@@ -315,8 +315,8 @@ export function GitDiffModeContent({
                 disabled={!onPush || pushLoading || commitsBehind > 0}
                 title={
                   commitsBehind > 0
-                    ? "Remote is ahead. Pull first, or use Sync."
-                    : `Push ${commitsAhead} commit${commitsAhead > 1 ? "s" : ""}`
+                    ? "远端有新提交。请先 Pull，或使用 Sync。"
+                    : `Push ${commitsAhead} 个 commit`
                 }
               >
                 {pushLoading ? (
@@ -335,14 +335,14 @@ export function GitDiffModeContent({
               className="push-button-secondary"
               onClick={() => void onSync?.()}
               disabled={!onSync || syncLoading || pullLoading}
-              title="Pull latest changes and push your local commits"
+              title="Pull 最新改动并 Push 本地 commits"
             >
               {syncLoading ? (
                 <span className="commit-button-spinner" aria-hidden />
               ) : (
                 <RotateCcw size={14} aria-hidden />
               )}
-              <span>{syncLoading ? "Syncing..." : "Sync (pull then push)"}</span>
+              <span>{syncLoading ? "Sync 中..." : "Sync（先 pull 后 push）"}</span>
             </button>
           )}
         </div>
@@ -351,12 +351,12 @@ export function GitDiffModeContent({
         !stagedFiles.length &&
         !unstagedFiles.length &&
         commitsAhead === 0 &&
-        commitsBehind === 0 && <div className="diff-empty">No changes detected.</div>}
+        commitsBehind === 0 && <div className="diff-empty">没有检测到改动。</div>}
       {(stagedFiles.length > 0 || unstagedFiles.length > 0) && (
         <>
           {stagedFiles.length > 0 && (
             <DiffSection
-              title="Staged"
+              title="已暂存"
               files={stagedFiles}
               section="staged"
               selectedFiles={selectedFiles}
@@ -376,7 +376,7 @@ export function GitDiffModeContent({
           )}
           {unstagedFiles.length > 0 && (
             <DiffSection
-              title="Unstaged"
+              title="未暂存"
               files={unstagedFiles}
               section="unstaged"
               selectedFiles={selectedFiles}

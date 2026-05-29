@@ -150,7 +150,7 @@ export function ThreadList({
             onToggleExpanded(workspaceId);
           }}
         >
-          {isExpanded ? "Show less" : "More..."}
+          {isExpanded ? "收起" : "更多..."}
         </button>
       )}
       {showLoadOlder && nextCursor && (isExpanded || totalThreadRoots <= 3) && (
@@ -163,10 +163,10 @@ export function ThreadList({
           disabled={isPaging}
         >
           {isPaging
-            ? "Loading..."
+            ? "加载中..."
             : totalThreadRoots === 0
-              ? "Search older..."
-              : "Load older..."}
+              ? "搜索更早..."
+              : "加载更早..."}
         </button>
       )}
     </div>

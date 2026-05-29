@@ -25,12 +25,12 @@ function buildCandidateThreads(
   isSubagentThread: (workspaceId: string, threadId: string) => boolean,
 ): CandidateThread[] {
   const workspaceLabelById = new Map(
-    workspaces.map((workspace) => [workspace.id, workspace.name.trim() || "Workspace"] as const),
+    workspaces.map((workspace) => [workspace.id, workspace.name.trim() || "工作区"] as const),
   );
   const candidates: CandidateThread[] = [];
 
   Object.entries(threadsByWorkspace).forEach(([workspaceId, threads]) => {
-    const workspaceLabel = workspaceLabelById.get(workspaceId) ?? "Workspace";
+    const workspaceLabel = workspaceLabelById.get(workspaceId) ?? "工作区";
     threads.forEach((thread) => {
       const threadId = String(thread.id ?? "").trim();
       if (!threadId || isSubagentThread(workspaceId, threadId)) {
@@ -40,7 +40,7 @@ function buildCandidateThreads(
         workspaceId,
         workspaceLabel,
         threadId,
-        threadLabel: thread.name?.trim() || "Untitled thread",
+        threadLabel: thread.name?.trim() || "未命名线程",
         updatedAt: Number(thread.updatedAt ?? 0),
       });
     });

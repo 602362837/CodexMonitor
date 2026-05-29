@@ -154,10 +154,10 @@ export const useSettingsProjectsSection = ({
         ? `\n\nProjects in this group will move to "${ungroupedLabel}".`
         : "";
     const confirmed = await ask(`Delete "${group.name}"?${detail}`, {
-      title: "Delete Group",
+      title: "删除分组",
       kind: "warning",
-      okLabel: "Delete",
-      cancelLabel: "Cancel",
+      okLabel: "删除",
+      cancelLabel: "取消",
     });
     if (!confirmed) {
       return;

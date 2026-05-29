@@ -58,7 +58,7 @@ export async function pickImageFiles(): Promise<string[]> {
     multiple: true,
     filters: [
       {
-        name: "Images",
+        name: "图片",
         extensions: [
           "png",
           "jpg",
@@ -85,7 +85,7 @@ export async function exportMarkdownFile(
   defaultFileName = "plan.md",
 ): Promise<string | null> {
   const selection = await save({
-    title: "Export plan as Markdown",
+    title: "导出计划为 Markdown",
     defaultPath: defaultFileName,
     filters: [
       {
@@ -730,8 +730,19 @@ export async function localUsageSnapshot(
   return invoke("local_usage_snapshot", payload);
 }
 
-export async function getModelList(workspaceId: string) {
-  return invoke<any>("model_list", { workspaceId });
+export type ModelListOptions = {
+  cursor?: string | null;
+  limit?: number | null;
+  includeHidden?: boolean | null;
+};
+
+export async function getModelList(workspaceId: string, options: ModelListOptions = {}) {
+  return invoke<any>("model_list", {
+    workspaceId,
+    cursor: options.cursor ?? null,
+    limit: options.limit ?? null,
+    includeHidden: options.includeHidden ?? null,
+  });
 }
 
 export async function getExperimentalFeatureList(

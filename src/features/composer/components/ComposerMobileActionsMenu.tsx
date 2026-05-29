@@ -58,8 +58,8 @@ export function ComposerMobileActionsMenu({
         disabled={disabled}
         aria-expanded={mobileActionsOpen}
         aria-haspopup="menu"
-        aria-label="More actions"
-        title="More actions"
+        aria-label="更多操作"
+        title="更多操作"
       >
         <Plus size={14} aria-hidden />
       </button>
@@ -70,7 +70,7 @@ export function ComposerMobileActionsMenu({
             disabled={disabled || !onAddAttachment}
             icon={<ImagePlus size={14} />}
           >
-            Add image
+            添加图片
           </PopoverMenuItem>
           {onToggleExpand && (
             <PopoverMenuItem
@@ -80,7 +80,7 @@ export function ComposerMobileActionsMenu({
                 isExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />
               }
             >
-              {isExpanded ? "Collapse input" : "Expand input"}
+              {isExpanded ? "收起输入框" : "展开输入框"}
             </PopoverMenuItem>
           )}
           {showDictationAction && (

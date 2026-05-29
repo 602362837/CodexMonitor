@@ -90,7 +90,7 @@ export function SettingsAboutSection({
     : new Date(parsedBuildDate).toLocaleString();
 
   return (
-    <SettingsSection title="About" subtitle="App version, build metadata, and update controls.">
+    <SettingsSection title="关于" subtitle="应用版本、构建信息和更新控制。">
       <div className="settings-field">
         <div className="settings-help">
           Version: <code>{__APP_VERSION__}</code>
@@ -109,10 +109,10 @@ export function SettingsAboutSection({
         </div>
       </div>
       <div className="settings-field">
-        <div className="settings-label">App Updates</div>
+        <div className="settings-label">应用更新</div>
         <SettingsToggleRow
-          title="Automatically check for app updates"
-          subtitle="When enabled, CodexMonitor checks for new app versions on launch."
+          title="自动检查应用更新"
+          subtitle="启用后，CodexMonitor 会在启动时检查新版本。"
         >
           <SettingsToggleSwitch
             pressed={appSettings.automaticAppUpdateChecksEnabled}
@@ -148,9 +148,9 @@ export function SettingsAboutSection({
                   : formatBytes(updaterState.progress?.downloadedBytes ?? 0)}
               </>
             ) : updaterState.stage === "installing" ? (
-              "Installing update..."
+              "正在安装更新..."
             ) : (
-              "Restarting..."
+              "正在重启..."
             )}
           </div>
         ) : updaterState.stage === "available" ? (
@@ -158,7 +158,7 @@ export function SettingsAboutSection({
             Version <code>{updaterState.version}</code> is available.
           </div>
         ) : updaterState.stage === "latest" ? (
-          <div className="settings-help">You are on the latest version.</div>
+          <div className="settings-help">当前已是最新版本。</div>
         ) : null}
 
         <div className="settings-controls">
@@ -184,7 +184,7 @@ export function SettingsAboutSection({
               }
               onClick={() => void checkForUpdates({ announceNoUpdate: true })}
             >
-              {updaterState.stage === "checking" ? "Checking..." : "Check for updates"}
+              {updaterState.stage === "checking" ? "检查中..." : "检查更新"}
             </button>
           )}
         </div>

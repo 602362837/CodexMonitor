@@ -31,11 +31,11 @@ export function SettingsGitSection({
   return (
     <SettingsSection
       title="Git"
-      subtitle="Manage how diffs are loaded in the Git sidebar."
+      subtitle="管理 Git 侧栏加载 diff 的方式。"
     >
       <SettingsToggleRow
-        title="Preload git diffs"
-        subtitle="Make viewing git diff faster."
+        title="预加载 git diffs"
+        subtitle="让查看 git diff 更快。"
       >
         <SettingsToggleSwitch
           pressed={appSettings.preloadGitDiffs}
@@ -48,8 +48,8 @@ export function SettingsGitSection({
         />
       </SettingsToggleRow>
       <SettingsToggleRow
-        title="Ignore whitespace changes"
-        subtitle="Hides whitespace-only changes in local and commit diffs."
+        title="忽略空白字符改动"
+        subtitle="在本地和 commit diffs 中隐藏仅空白字符变化。"
       >
         <SettingsToggleSwitch
           pressed={appSettings.gitDiffIgnoreWhitespaceChanges}
@@ -62,7 +62,7 @@ export function SettingsGitSection({
         />
       </SettingsToggleRow>
       <div className="settings-field">
-        <div className="settings-field-label">Commit message prompt</div>
+        <div className="settings-field-label">提交信息提示词</div>
         <div className="settings-help">
           Used when generating commit messages. Include <code>{"{diff}"}</code> to insert the
           git diff.
@@ -93,7 +93,7 @@ export function SettingsGitSection({
             }}
             disabled={commitMessagePromptSaving || !commitMessagePromptDirty}
           >
-            {commitMessagePromptSaving ? "Saving..." : "Save"}
+            {commitMessagePromptSaving ? "保存中..." : "保存"}
           </button>
         </div>
       </div>
@@ -118,7 +118,7 @@ export function SettingsGitSection({
               });
             }}
           >
-            <option value="">Default</option>
+            <option value="">默认</option>
             {models.map((model) => (
               <option key={model.id} value={model.model}>
                 {model.displayName?.trim() || model.model}

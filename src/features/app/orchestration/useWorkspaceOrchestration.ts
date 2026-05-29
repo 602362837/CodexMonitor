@@ -22,6 +22,7 @@ type UseWorkspaceInsightsOrchestrationOptions = {
   workspacesById: Map<string, WorkspaceInfo>;
   hasLoaded: boolean;
   showHome: boolean;
+  activeWorkspaceId: string | null;
   threadsByWorkspace: Record<string, ThreadSummary[]>;
   lastAgentMessageByThread: Record<string, LastAgentMessage | undefined>;
   threadStatusById: Record<string, ThreadStatus | undefined>;
@@ -43,6 +44,7 @@ export function useWorkspaceInsightsOrchestration({
   workspacesById,
   hasLoaded,
   showHome,
+  activeWorkspaceId,
   threadsByWorkspace,
   lastAgentMessageByThread,
   threadStatusById,
@@ -108,11 +110,16 @@ export function useWorkspaceInsightsOrchestration({
   );
 
   const usageWorkspacePath = useMemo(() => {
+    if (!showHome) {
+      return activeWorkspaceId
+        ? workspacesById.get(activeWorkspaceId)?.path ?? null
+        : null;
+    }
     if (!usageWorkspaceId) {
       return null;
     }
     return workspacesById.get(usageWorkspaceId)?.path ?? null;
-  }, [usageWorkspaceId, workspacesById]);
+  }, [activeWorkspaceId, showHome, usageWorkspaceId, workspacesById]);
 
   useEffect(() => {
     if (!usageWorkspaceId) {
@@ -129,7 +136,7 @@ export function useWorkspaceInsightsOrchestration({
     isLoading: isLoadingLocalUsage,
     error: localUsageError,
     refresh: refreshLocalUsage,
-  } = useLocalUsage(showHome, usageWorkspacePath);
+  } = useLocalUsage(showHome || Boolean(activeWorkspaceId), usageWorkspacePath);
 
   return {
     latestAgentRuns,

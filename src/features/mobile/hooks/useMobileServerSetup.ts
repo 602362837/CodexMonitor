@@ -23,7 +23,7 @@ function isRemoteServerConfigured(settings: AppSettings): boolean {
 }
 
 function defaultMobileSetupMessage(): string {
-  return "Enter your desktop Tailscale host and token, then run Connect & test.";
+  return "请输入桌面端 Tailscale 主机和 token，然后点击“连接并测试”。";
 }
 
 function markActiveRemoteBackendConnected(settings: AppSettings, connectedAtMs: number): AppSettings {
@@ -33,7 +33,7 @@ function markActiveRemoteBackendConnected(settings: AppSettings, connectedAtMs: 
       : [
           {
             id: settings.activeRemoteBackendId ?? "remote-default",
-            name: "Primary remote",
+            name: "主要远程后端",
             provider: "tcp" as const,
             host: settings.remoteBackendHost,
             token: settings.remoteBackendToken,
@@ -105,15 +105,14 @@ export function useMobileServerSetup({
         setStatusError(false);
         if (options?.announceSuccess) {
           const count = entries.length;
-          const workspaceWord = count === 1 ? "workspace" : "workspaces";
-          setStatusMessage(`Connected. ${count} ${workspaceWord} available from your desktop backend.`);
+          setStatusMessage(`已连接。桌面端后端有 ${count} 个工作区可用。`);
         } else {
           setStatusMessage(null);
         }
         return true;
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unable to reach remote backend.";
+          error instanceof Error ? error.message : "无法连接到远程后端。";
         setMobileServerReady(false);
         setStatusError(true);
         setStatusMessage(message);
@@ -157,7 +156,7 @@ export function useMobileServerSetup({
         }
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unable to save remote backend settings.";
+          error instanceof Error ? error.message : "无法保存远程后端设置。";
         setMobileServerReady(false);
         setStatusError(true);
         setStatusMessage(message);
@@ -193,7 +192,7 @@ export function useMobileServerSetup({
     void (async () => {
       const ok = await runConnectivityCheck();
       if (active && !ok) {
-        setStatusMessage((previous) => previous ?? "Unable to connect to remote backend.");
+        setStatusMessage((previous) => previous ?? "无法连接到远程后端。");
       }
       if (active) {
         setChecking(false);

@@ -5,6 +5,7 @@ import FolderPlus from "lucide-react/dist/esm/icons/folder-plus";
 import FolderTree from "lucide-react/dist/esm/icons/folder-tree";
 import ListFilter from "lucide-react/dist/esm/icons/list-filter";
 import ListTree from "lucide-react/dist/esm/icons/list-tree";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
 import Search from "lucide-react/dist/esm/icons/search";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -19,6 +20,7 @@ import { useMenuController } from "../hooks/useMenuController";
 type SidebarHeaderProps = {
   onSelectHome: () => void;
   onAddWorkspace: () => void;
+  onCreateWorkspaceGroup: () => void;
   onToggleSearch: () => void;
   isSearchOpen: boolean;
   threadListSortKey: ThreadListSortKey;
@@ -33,6 +35,7 @@ type SidebarHeaderProps = {
 export function SidebarHeader({
   onSelectHome,
   onAddWorkspace,
+  onCreateWorkspaceGroup,
   onToggleSearch,
   isSearchOpen,
   threadListSortKey,
@@ -129,8 +132,8 @@ export function SidebarHeader({
             className="sidebar-title-add ds-tooltip-trigger"
             onClick={onAddWorkspace}
             data-tauri-drag-region="false"
-            aria-label="Add workspaces"
-            data-tooltip="Add workspaces"
+            aria-label="添加工作区"
+            data-tooltip="添加工作区"
             data-tooltip-align="start"
             data-tooltip-placement="bottom"
             type="button"
@@ -138,12 +141,24 @@ export function SidebarHeader({
             <FolderPlus aria-hidden />
           </button>
           <button
+            className="sidebar-title-add ds-tooltip-trigger"
+            onClick={onCreateWorkspaceGroup}
+            data-tauri-drag-region="false"
+            aria-label="新建分组"
+            data-tooltip="新建分组"
+            data-tooltip-align="start"
+            data-tooltip-placement="bottom"
+            type="button"
+          >
+            <Plus aria-hidden />
+          </button>
+          <button
             className="subtitle subtitle-button sidebar-title-button"
             onClick={onSelectHome}
             data-tauri-drag-region="false"
-            aria-label="Open home"
+            aria-label="打开首页"
           >
-            Projects
+            项目
           </button>
         </div>
       </div>
@@ -155,9 +170,9 @@ export function SidebarHeader({
             className="ghost sidebar-sort-toggle ds-tooltip-trigger"
             onClick={sortMenu.toggle}
             data-tauri-drag-region="false"
-            aria-label="Organize and sort threads"
-            title="Organize and sort threads"
-            data-tooltip="Organize and sort threads"
+            aria-label="整理和排序线程"
+            title="整理和排序线程"
+            data-tooltip="整理和排序线程"
             data-tooltip-align="end"
             data-tooltip-placement="bottom"
           >
@@ -174,7 +189,7 @@ export function SidebarHeader({
                   : undefined
               }
             >
-              <div className="sidebar-sort-section-label">Organize</div>
+              <div className="sidebar-sort-section-label">整理方式</div>
               <PopoverMenuItem
                 className="sidebar-sort-option"
                 role="menuitemradio"
@@ -184,7 +199,7 @@ export function SidebarHeader({
                 icon={<FolderTree aria-hidden />}
                 active={threadListOrganizeMode === "by_project"}
               >
-                By project
+                按项目
               </PopoverMenuItem>
               <PopoverMenuItem
                 className="sidebar-sort-option"
@@ -195,7 +210,7 @@ export function SidebarHeader({
                 icon={<BetweenHorizontalStart aria-hidden />}
                 active={threadListOrganizeMode === "by_project_activity"}
               >
-                By project activity
+                按项目活跃度
               </PopoverMenuItem>
               <PopoverMenuItem
                 className="sidebar-sort-option"
@@ -206,10 +221,10 @@ export function SidebarHeader({
                 icon={<ListTree aria-hidden />}
                 active={threadListOrganizeMode === "threads_only"}
               >
-                Thread list
+                线程列表
               </PopoverMenuItem>
               <div className="sidebar-sort-divider" aria-hidden />
-              <div className="sidebar-sort-section-label">Sort by</div>
+              <div className="sidebar-sort-section-label">排序</div>
               <PopoverMenuItem
                 className="sidebar-sort-option"
                 role="menuitemradio"
@@ -219,7 +234,7 @@ export function SidebarHeader({
                 icon={<ArrowDownUp aria-hidden />}
                 active={threadListSortKey === "updated_at"}
               >
-                Updated
+                更新时间
               </PopoverMenuItem>
               <PopoverMenuItem
                 className="sidebar-sort-option"
@@ -230,7 +245,7 @@ export function SidebarHeader({
                 icon={<Calendar aria-hidden />}
                 active={threadListSortKey === "created_at"}
               >
-                Created
+                创建时间
               </PopoverMenuItem>
             </PopoverSurface>
           )}
@@ -239,10 +254,10 @@ export function SidebarHeader({
           className="ghost sidebar-refresh-toggle ds-tooltip-trigger"
           onClick={onRefreshAllThreads}
           data-tauri-drag-region="false"
-          aria-label="Refresh all workspace threads"
+          aria-label="刷新所有工作区线程"
           type="button"
-          title="Refresh all workspace threads"
-          data-tooltip="Refresh all workspace threads"
+          title="刷新所有工作区线程"
+          data-tooltip="刷新所有工作区线程"
           data-tooltip-align="end"
           data-tooltip-placement="bottom"
           disabled={refreshDisabled}
@@ -257,8 +272,8 @@ export function SidebarHeader({
           className={`ghost sidebar-search-toggle ds-tooltip-trigger${isSearchOpen ? " is-active" : ""}`}
           onClick={onToggleSearch}
           data-tauri-drag-region="false"
-          aria-label="Toggle search"
-          data-tooltip={isSearchOpen ? "Close search" : "Search threads"}
+          aria-label="切换搜索"
+          data-tooltip={isSearchOpen ? "关闭搜索" : "搜索线程"}
           data-tooltip-align="end"
           data-tooltip-placement="bottom"
           aria-pressed={isSearchOpen}
