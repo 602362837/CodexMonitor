@@ -14,6 +14,7 @@ import type {
 
 type HomeProps = {
   onAddWorkspace: () => void;
+  onAddWorkspaceFromPath: () => void;
   onAddWorkspaceFromUrl: () => void;
   latestAgentRuns: LatestAgentRun[];
   isLoadingLatestAgents: boolean;
@@ -34,6 +35,7 @@ type HomeProps = {
 
 export function Home({
   onAddWorkspace,
+  onAddWorkspaceFromPath,
   onAddWorkspaceFromUrl,
   latestAgentRuns,
   isLoadingLatestAgents,
@@ -66,6 +68,7 @@ export function Home({
       />
       <HomeActions
         onAddWorkspace={onAddWorkspace}
+        onAddWorkspaceFromPath={onAddWorkspaceFromPath}
         onAddWorkspaceFromUrl={onAddWorkspaceFromUrl}
       />
       <HomeUsageSection

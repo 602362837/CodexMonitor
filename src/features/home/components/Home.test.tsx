@@ -10,6 +10,7 @@ afterEach(() => {
 const baseProps = {
   onOpenSettings: vi.fn(),
   onAddWorkspace: vi.fn(),
+  onAddWorkspaceFromPath: vi.fn(),
   onAddWorkspaceFromUrl: vi.fn(),
   latestAgentRuns: [],
   isLoadingLatestAgents: false,
@@ -49,7 +50,7 @@ describe("Home", () => {
       />,
     );
 
-    expect(screen.getByText("Latest agents")).toBeTruthy();
+    expect(screen.getByText("最近的 agents")).toBeTruthy();
     expect(screen.getByText("CodexMonitor")).toBeTruthy();
     expect(screen.getByText("Frontend")).toBeTruthy();
     const message = screen.getByText("Ship the dashboard refresh");
@@ -60,16 +61,25 @@ describe("Home", () => {
     }
     fireEvent.click(card);
     expect(onSelectThread).toHaveBeenCalledWith("workspace-1", "thread-1");
-    expect(screen.getByText("Running")).toBeTruthy();
+    expect(screen.getByText("运行中")).toBeTruthy();
   });
 
   it("shows the empty state when there are no latest runs", () => {
     render(<Home {...baseProps} />);
 
-    expect(screen.getByText("No agent activity yet")).toBeTruthy();
+    expect(screen.getByText("还没有 agent 活动")).toBeTruthy();
     expect(
-      screen.getByText("Start a thread to see the latest responses here."),
+      screen.getByText("开始一个线程后，最新回复会显示在这里。"),
     ).toBeTruthy();
+  });
+
+  it("opens the manual local path workspace prompt", () => {
+    const onAddWorkspaceFromPath = vi.fn();
+    render(<Home {...baseProps} onAddWorkspaceFromPath={onAddWorkspaceFromPath} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "从路径添加工作区" }));
+
+    expect(onAddWorkspaceFromPath).toHaveBeenCalledTimes(1);
   });
 
   it("renders usage cards in time mode", () => {
@@ -103,13 +113,13 @@ describe("Home", () => {
       />,
     );
 
-    expect(screen.getAllByText("agent time").length).toBeGreaterThan(0);
-    expect(screen.getByText("Runs")).toBeTruthy();
-    expect(screen.getByText("Peak day")).toBeTruthy();
-    expect(screen.getByText("Avg / run")).toBeTruthy();
-    expect(screen.getByText("Avg / active day")).toBeTruthy();
-    expect(screen.getByText("Longest streak")).toBeTruthy();
-    expect(screen.getByText("Active days")).toBeTruthy();
+    expect(screen.getAllByText("agent 时间").length).toBeGreaterThan(0);
+    expect(screen.getByText("运行次数")).toBeTruthy();
+    expect(screen.getByText("峰值日")).toBeTruthy();
+    expect(screen.getByText("平均 / 次")).toBeTruthy();
+    expect(screen.getByText("平均 / 活跃日")).toBeTruthy();
+    expect(screen.getByText("最长连续天数")).toBeTruthy();
+    expect(screen.getByText("活跃天数")).toBeTruthy();
   });
 
   it("renders expanded token stats and account limits", () => {
@@ -283,17 +293,17 @@ describe("Home", () => {
       />,
     );
 
-    expect(screen.getByText("Cached tokens")).toBeTruthy();
-    expect(screen.getByText("Avg / run")).toBeTruthy();
-    expect(screen.getByText("Longest streak")).toBeTruthy();
-    expect(screen.getByText("4 days")).toBeTruthy();
-    expect(screen.getByText("Account limits")).toBeTruthy();
-    expect(screen.getByText("Unlimited")).toBeTruthy();
+    expect(screen.getByText("缓存 tokens")).toBeTruthy();
+    expect(screen.getByText("平均 / 次")).toBeTruthy();
+    expect(screen.getByText("最长连续天数")).toBeTruthy();
+    expect(screen.getByText("4 天")).toBeTruthy();
+    expect(screen.getByText("账号限制")).toBeTruthy();
+    expect(screen.getByText("无限")).toBeTruthy();
     expect(screen.getByText("Pro")).toBeTruthy();
     expect(screen.getByText(/user@example\.com/)).toBeTruthy();
-    expect(screen.queryByText("Workspace CodexMonitor")).toBeNull();
+    expect(screen.queryByText("工作区 CodexMonitor")).toBeNull();
 
-    const todayCard = screen.getByText("Today").closest(".home-usage-card");
+    const todayCard = screen.getByText("今天").closest(".home-usage-card");
     expect(todayCard).toBeTruthy();
     if (!(todayCard instanceof HTMLElement)) {
       throw new Error("Expected today usage card");
@@ -301,33 +311,33 @@ describe("Home", () => {
     expect(within(todayCard).getByText("36")).toBeTruthy();
 
     expect(
-      screen.getByLabelText("Usage week 2026-01-14 to 2026-01-20"),
+      screen.getByLabelText("用量周 2026-01-14 到 2026-01-20"),
     ).toBeTruthy();
     expect(
-      (screen.getByRole("button", { name: "Show next week" }) as HTMLButtonElement)
+      (screen.getByRole("button", { name: "显示下一周" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(
       screen.getByText("Jan 20").closest(".home-usage-bar")?.getAttribute("data-value"),
     ).toBe("Jan 20 · 36 tokens");
 
-    fireEvent.click(screen.getByRole("button", { name: "Show previous week" }));
+    fireEvent.click(screen.getByRole("button", { name: "显示上一周" }));
 
     expect(
-      screen.getByLabelText("Usage week 2026-01-07 to 2026-01-13"),
+      screen.getByLabelText("用量周 2026-01-07 到 2026-01-13"),
     ).toBeTruthy();
     expect(
-      (screen.getByRole("button", { name: "Show next week" }) as HTMLButtonElement)
+      (screen.getByRole("button", { name: "显示下一周" }) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
 
-    fireEvent.click(screen.getByRole("button", { name: "Show next week" }));
+    fireEvent.click(screen.getByRole("button", { name: "显示下一周" }));
 
     expect(
-      screen.getByLabelText("Usage week 2026-01-14 to 2026-01-20"),
+      screen.getByLabelText("用量周 2026-01-14 到 2026-01-20"),
     ).toBeTruthy();
     expect(
-      (screen.getByRole("button", { name: "Show next week" }) as HTMLButtonElement)
+      (screen.getByRole("button", { name: "显示下一周" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
   });
@@ -359,9 +369,9 @@ describe("Home", () => {
       />,
     );
 
-    expect(screen.getByText("Account limits")).toBeTruthy();
+    expect(screen.getByText("账号限制")).toBeTruthy();
     expect(screen.getByText("120")).toBeTruthy();
     expect(screen.getByText(/user@example\.com/)).toBeTruthy();
-    expect(screen.getByText("No usage data yet")).toBeTruthy();
+    expect(screen.getByText("还没有用量数据")).toBeTruthy();
   });
 });

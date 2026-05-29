@@ -121,6 +121,7 @@ type UseMainAppLayoutSurfacesArgs = {
   openInitGitRepoPrompt: GitDiffPanelProps["onInitGitRepo"];
   startUncommittedReview: (workspaceId: string | null) => void;
   handleAddWorkspace: () => void;
+  openWorkspaceFromPathPrompt: () => void;
   openWorkspaceFromUrlPrompt: () => void;
   handleAddAgent: SidebarProps["onAddAgent"];
   handleAddWorktreeAgent: SidebarProps["onAddWorktreeAgent"];
@@ -297,6 +298,7 @@ function buildPrimarySurface({
   dictationUi,
   openAppIconById,
   handleAddWorkspace,
+  openWorkspaceFromPathPrompt,
   openWorkspaceFromUrlPrompt,
   handleAddAgent,
   handleAddWorktreeAgent,
@@ -592,6 +594,7 @@ function buildPrimarySurface({
     },
     homeProps: {
       onAddWorkspace: handleAddWorkspace,
+      onAddWorkspaceFromPath: openWorkspaceFromPathPrompt,
       onAddWorkspaceFromUrl: openWorkspaceFromUrlPrompt,
       latestAgentRuns,
       isLoadingLatestAgents,
@@ -1015,6 +1018,7 @@ export function useMainAppLayoutSurfaces({
   openInitGitRepoPrompt,
   startUncommittedReview,
   handleAddWorkspace,
+  openWorkspaceFromPathPrompt,
   openWorkspaceFromUrlPrompt,
   handleAddAgent,
   handleAddWorktreeAgent,
@@ -1180,6 +1184,7 @@ export function useMainAppLayoutSurfaces({
     openInitGitRepoPrompt,
     startUncommittedReview,
     handleAddWorkspace,
+    openWorkspaceFromPathPrompt,
     openWorkspaceFromUrlPrompt,
     handleAddAgent,
     handleAddWorktreeAgent,

@@ -79,6 +79,7 @@ type UseMainAppModalsArgs = {
     cancelMobileRemoteWorkspacePathPrompt: () => void;
     submitMobileRemoteWorkspacePathPrompt: () => void;
     openWorkspaceFromUrlPrompt: () => void;
+    openWorkspaceFromPathPrompt: () => void;
     workspaceFromUrl: Pick<
       AppModalsProps,
       | "workspaceFromUrlPrompt"
@@ -89,6 +90,14 @@ type UseMainAppModalsArgs = {
       | "onWorkspaceFromUrlPromptClearDestinationPath"
       | "onWorkspaceFromUrlPromptCancel"
       | "onWorkspaceFromUrlPromptConfirm"
+    >;
+    workspaceFromPath: Pick<
+      AppModalsProps,
+      | "workspaceFromPathPrompt"
+      | "workspaceFromPathCanSubmit"
+      | "onWorkspaceFromPathPromptPathChange"
+      | "onWorkspaceFromPathPromptCancel"
+      | "onWorkspaceFromPathPromptConfirm"
     >;
   };
   settings: {
@@ -144,6 +153,7 @@ type UseMainAppModalsResult = {
     openWorktreePrompt: (workspace: WorkspaceInfo) => void;
     openClonePrompt: (workspace: WorkspaceInfo) => void;
     openWorkspaceFromUrlPrompt: () => void;
+    openWorkspaceFromPathPrompt: () => void;
     openBranchSwitcher: () => void;
     closeBranchSwitcher: () => void;
   };
@@ -241,6 +251,16 @@ type BuildAppModalsPropsArgs = {
         | "onWorkspaceFromUrlPromptCancel"
         | "onWorkspaceFromUrlPromptConfirm"
       >;
+  workspaceFromPath: AppModalsProps["workspaceFromPathPrompt"] extends null
+    ? never
+    : Pick<
+        AppModalsProps,
+        | "workspaceFromPathPrompt"
+        | "workspaceFromPathCanSubmit"
+        | "onWorkspaceFromPathPromptPathChange"
+        | "onWorkspaceFromPathPromptCancel"
+        | "onWorkspaceFromPathPromptConfirm"
+      >;
   mobileRemoteWorkspacePathPrompt: AppModalsProps["mobileRemoteWorkspacePathPrompt"];
   onMobileRemoteWorkspacePathPromptChange: (value: string) => void;
   onMobileRemoteWorkspacePathPromptRecentPathSelect: (path: string) => void;
@@ -288,6 +308,7 @@ function buildAppModalsProps({
   onClonePromptCancel,
   onClonePromptConfirm,
   workspaceFromUrl,
+  workspaceFromPath,
   mobileRemoteWorkspacePathPrompt,
   onMobileRemoteWorkspacePathPromptChange,
   onMobileRemoteWorkspacePathPromptRecentPathSelect,
@@ -334,6 +355,7 @@ function buildAppModalsProps({
     onClonePromptCancel,
     onClonePromptConfirm,
     ...workspaceFromUrl,
+    ...workspaceFromPath,
     mobileRemoteWorkspacePathPrompt,
     onMobileRemoteWorkspacePathPromptChange,
     onMobileRemoteWorkspacePathPromptRecentPathSelect,
@@ -495,6 +517,7 @@ export function useMainAppModals({
         onClonePromptCancel: cancelClonePrompt,
         onClonePromptConfirm: confirmClonePrompt,
         workspaceFromUrl: workspacePrompts.workspaceFromUrl,
+        workspaceFromPath: workspacePrompts.workspaceFromPath,
         mobileRemoteWorkspacePathPrompt:
           workspacePrompts.mobileRemoteWorkspacePathPrompt,
         onMobileRemoteWorkspacePathPromptChange:
@@ -572,6 +595,7 @@ export function useMainAppModals({
       openWorktreePrompt,
       openClonePrompt,
       openWorkspaceFromUrlPrompt: workspacePrompts.openWorkspaceFromUrlPrompt,
+      openWorkspaceFromPathPrompt: workspacePrompts.openWorkspaceFromPathPrompt,
       openBranchSwitcher,
       closeBranchSwitcher,
     },

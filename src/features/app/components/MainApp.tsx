@@ -25,6 +25,7 @@ import { useMainAppComposerWorkspaceState } from "@app/hooks/useMainAppComposerW
 import { useMainAppGitState } from "@app/hooks/useMainAppGitState";
 import { useMainAppLayoutSurfaces } from "@app/hooks/useMainAppLayoutSurfaces";
 import { useMainAppLayoutNodes } from "@app/hooks/useMainAppLayoutNodes";
+import { useWorkspaceFromPathPrompt } from "@/features/workspaces/hooks/useWorkspaceFromPathPrompt";
 import { useWorkspaceFromUrlPrompt } from "@/features/workspaces/hooks/useWorkspaceFromUrlPrompt";
 import { useWorkspaceController } from "@app/hooks/useWorkspaceController";
 import { useWorkspaceSelection } from "@/features/workspaces/hooks/useWorkspaceSelection";
@@ -937,6 +938,24 @@ export default function MainApp() {
       await handleAddWorkspaceFromGitUrl(url, destinationPath, targetFolderName);
     },
   });
+  const {
+    workspaceFromPathPrompt,
+    openWorkspaceFromPathPrompt,
+    closeWorkspaceFromPathPrompt,
+    submitWorkspaceFromPathPrompt,
+    updateWorkspaceFromPathPath,
+    canSubmitWorkspaceFromPathPrompt,
+  } = useWorkspaceFromPathPrompt({
+    onSubmit: async (path) => {
+      const workspace = await addWorkspaceFromPath(path);
+      if (workspace) {
+        setActiveThreadId(null, workspace.id);
+        if (isCompact) {
+          setActiveTab("codex");
+        }
+      }
+    },
+  });
 
   const { appModalsProps, modalActions } = useMainAppModals({
     settingsViewComponent: SettingsView,
@@ -985,6 +1004,7 @@ export default function MainApp() {
       cancelMobileRemoteWorkspacePathPrompt,
       submitMobileRemoteWorkspacePathPrompt,
       openWorkspaceFromUrlPrompt,
+      openWorkspaceFromPathPrompt,
       workspaceFromUrl: {
         workspaceFromUrlPrompt,
         workspaceFromUrlCanSubmit: canSubmitWorkspaceFromUrlPrompt,
@@ -997,6 +1017,13 @@ export default function MainApp() {
           clearWorkspaceFromUrlDestinationPath,
         onWorkspaceFromUrlPromptCancel: closeWorkspaceFromUrlPrompt,
         onWorkspaceFromUrlPromptConfirm: submitWorkspaceFromUrlPrompt,
+      },
+      workspaceFromPath: {
+        workspaceFromPathPrompt,
+        workspaceFromPathCanSubmit: canSubmitWorkspaceFromPathPrompt,
+        onWorkspaceFromPathPromptPathChange: updateWorkspaceFromPathPath,
+        onWorkspaceFromPathPromptCancel: closeWorkspaceFromPathPrompt,
+        onWorkspaceFromPathPromptConfirm: submitWorkspaceFromPathPrompt,
       },
     },
     settings: {
@@ -1687,6 +1714,7 @@ export default function MainApp() {
     openInitGitRepoPrompt: modalActions.openInitGitRepoPrompt,
     startUncommittedReview,
     handleAddWorkspace,
+    openWorkspaceFromPathPrompt,
     openWorkspaceFromUrlPrompt,
     handleAddAgent,
     handleAddWorktreeAgent,

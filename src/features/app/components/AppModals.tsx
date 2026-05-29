@@ -5,6 +5,7 @@ import type { SettingsViewProps } from "../../settings/components/SettingsView";
 import { useRenameThreadPrompt } from "../../threads/hooks/useRenameThreadPrompt";
 import { useClonePrompt } from "../../workspaces/hooks/useClonePrompt";
 import { useWorktreePrompt } from "../../workspaces/hooks/useWorktreePrompt";
+import { useWorkspaceFromPathPrompt } from "../../workspaces/hooks/useWorkspaceFromPathPrompt";
 import { useWorkspaceFromUrlPrompt } from "../../workspaces/hooks/useWorkspaceFromUrlPrompt";
 import type { BranchSwitcherState } from "../../git/hooks/useBranchSwitcher";
 import { useGitBranches } from "../../git/hooks/useGitBranches";
@@ -27,6 +28,11 @@ const ClonePrompt = lazy(() =>
 const WorkspaceFromUrlPrompt = lazy(() =>
   import("../../workspaces/components/WorkspaceFromUrlPrompt").then((module) => ({
     default: module.WorkspaceFromUrlPrompt,
+  })),
+);
+const WorkspaceFromPathPrompt = lazy(() =>
+  import("../../workspaces/components/WorkspaceFromPathPrompt").then((module) => ({
+    default: module.WorkspaceFromPathPrompt,
   })),
 );
 const MobileRemoteWorkspacePrompt = lazy(() =>
@@ -53,6 +59,9 @@ type ClonePromptState = ReturnType<typeof useClonePrompt>["clonePrompt"];
 type WorkspaceFromUrlPromptState = ReturnType<
   typeof useWorkspaceFromUrlPrompt
 >["workspaceFromUrlPrompt"];
+type WorkspaceFromPathPromptState = ReturnType<
+  typeof useWorkspaceFromPathPrompt
+>["workspaceFromPathPrompt"];
 type MobileRemoteWorkspacePathPromptState = {
   value: string;
   error: string | null;
@@ -95,12 +104,17 @@ export type AppModalsProps = {
   onClonePromptConfirm: () => void;
   workspaceFromUrlPrompt: WorkspaceFromUrlPromptState;
   workspaceFromUrlCanSubmit: boolean;
+  workspaceFromPathPrompt: WorkspaceFromPathPromptState;
+  workspaceFromPathCanSubmit: boolean;
   onWorkspaceFromUrlPromptUrlChange: (value: string) => void;
   onWorkspaceFromUrlPromptTargetFolderNameChange: (value: string) => void;
   onWorkspaceFromUrlPromptChooseDestinationPath: () => void;
   onWorkspaceFromUrlPromptClearDestinationPath: () => void;
   onWorkspaceFromUrlPromptCancel: () => void;
   onWorkspaceFromUrlPromptConfirm: () => void;
+  onWorkspaceFromPathPromptPathChange: (value: string) => void;
+  onWorkspaceFromPathPromptCancel: () => void;
+  onWorkspaceFromPathPromptConfirm: () => void;
   mobileRemoteWorkspacePathPrompt: MobileRemoteWorkspacePathPromptState;
   onMobileRemoteWorkspacePathPromptChange: (value: string) => void;
   onMobileRemoteWorkspacePathPromptRecentPathSelect: (path: string) => void;
@@ -149,12 +163,17 @@ export const AppModals = memo(function AppModals({
   onClonePromptConfirm,
   workspaceFromUrlPrompt,
   workspaceFromUrlCanSubmit,
+  workspaceFromPathPrompt,
+  workspaceFromPathCanSubmit,
   onWorkspaceFromUrlPromptUrlChange,
   onWorkspaceFromUrlPromptTargetFolderNameChange,
   onWorkspaceFromUrlPromptChooseDestinationPath,
   onWorkspaceFromUrlPromptClearDestinationPath,
   onWorkspaceFromUrlPromptCancel,
   onWorkspaceFromUrlPromptConfirm,
+  onWorkspaceFromPathPromptPathChange,
+  onWorkspaceFromPathPromptCancel,
+  onWorkspaceFromPathPromptConfirm,
   mobileRemoteWorkspacePathPrompt,
   onMobileRemoteWorkspacePathPromptChange,
   onMobileRemoteWorkspacePathPromptRecentPathSelect,
@@ -265,6 +284,19 @@ export const AppModals = memo(function AppModals({
             onClearDestinationPath={onWorkspaceFromUrlPromptClearDestinationPath}
             onCancel={onWorkspaceFromUrlPromptCancel}
             onConfirm={onWorkspaceFromUrlPromptConfirm}
+          />
+        </Suspense>
+      )}
+      {workspaceFromPathPrompt && (
+        <Suspense fallback={null}>
+          <WorkspaceFromPathPrompt
+            path={workspaceFromPathPrompt.path}
+            error={workspaceFromPathPrompt.error}
+            isBusy={workspaceFromPathPrompt.isSubmitting}
+            canSubmit={workspaceFromPathCanSubmit}
+            onPathChange={onWorkspaceFromPathPromptPathChange}
+            onCancel={onWorkspaceFromPathPromptCancel}
+            onConfirm={onWorkspaceFromPathPromptConfirm}
           />
         </Suspense>
       )}
