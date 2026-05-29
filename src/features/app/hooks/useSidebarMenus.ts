@@ -9,11 +9,13 @@ import { fileManagerName } from "../../../utils/platformPaths";
 
 type SidebarMenuHandlers = {
   onDeleteThread: (workspaceId: string, threadId: string) => void;
+  onArchiveWorkspaceThreads: (workspaceId: string) => Promise<string[]>;
   onSyncThread: (workspaceId: string, threadId: string) => void;
   onPinThread: (workspaceId: string, threadId: string) => void;
   onUnpinThread: (workspaceId: string, threadId: string) => void;
   isThreadPinned: (workspaceId: string, threadId: string) => boolean;
   onRenameThread: (workspaceId: string, threadId: string) => void;
+  onRenameWorkspaceDisplayName: (workspace: WorkspaceInfo) => void;
   onReloadWorkspaceThreads: (workspaceId: string) => void;
   onDeleteWorkspace: (workspaceId: string) => void;
   onDeleteWorktree: (workspaceId: string) => void;
@@ -21,11 +23,13 @@ type SidebarMenuHandlers = {
 
 export function useSidebarMenus({
   onDeleteThread,
+  onArchiveWorkspaceThreads,
   onSyncThread,
   onPinThread,
   onUnpinThread,
   isThreadPinned,
   onRenameThread,
+  onRenameWorkspaceDisplayName,
   onReloadWorkspaceThreads,
   onDeleteWorkspace,
   onDeleteWorktree,
@@ -79,9 +83,9 @@ export function useSidebarMenus({
       }
       items.push(copyItem, archiveItem);
       const menu = await Menu.new({ items });
-      const window = getCurrentWindow();
+      const appWindow = getCurrentWindow();
       const position = new LogicalPosition(event.clientX, event.clientY);
-      await menu.popup(position, window);
+      await menu.popup(position, appWindow);
     },
     [
       isThreadPinned,
@@ -94,23 +98,48 @@ export function useSidebarMenus({
   );
 
   const showWorkspaceMenu = useCallback(
-    async (event: MouseEvent, workspaceId: string) => {
+    async (event: MouseEvent, workspace: WorkspaceInfo) => {
       event.preventDefault();
       event.stopPropagation();
+      const workspaceId = workspace.id;
+      const renameItem = await MenuItem.new({
+        text: "修改显示名称",
+        action: () => onRenameWorkspaceDisplayName(workspace),
+      });
       const reloadItem = await MenuItem.new({
         text: "重新加载线程",
         action: () => onReloadWorkspaceThreads(workspaceId),
+      });
+      const archiveAllItem = await MenuItem.new({
+        text: "一键归档全部会话",
+        action: async () => {
+          try {
+            await onArchiveWorkspaceThreads(workspaceId);
+          } catch (error) {
+            pushErrorToast({
+              title: "归档项目会话失败",
+              message: error instanceof Error ? error.message : String(error),
+            });
+          }
+        },
       });
       const deleteItem = await MenuItem.new({
         text: "删除",
         action: () => onDeleteWorkspace(workspaceId),
       });
-      const menu = await Menu.new({ items: [reloadItem, deleteItem] });
-      const window = getCurrentWindow();
+      const menu = await Menu.new({
+        items: [renameItem, reloadItem, archiveAllItem, deleteItem],
+      });
+      const appWindow = getCurrentWindow();
       const position = new LogicalPosition(event.clientX, event.clientY);
-      await menu.popup(position, window);
+      await menu.popup(position, appWindow);
     },
-    [onReloadWorkspaceThreads, onDeleteWorkspace],
+    [
+      onArchiveWorkspaceThreads,
+      onDeleteWorkspace,
+      onReloadWorkspaceThreads,
+      onRenameWorkspaceDisplayName,
+    ],
   );
 
   const showWorktreeMenu = useCallback(
@@ -121,6 +150,10 @@ export function useSidebarMenus({
       const reloadItem = await MenuItem.new({
         text: "重新加载线程",
         action: () => onReloadWorkspaceThreads(worktree.id),
+      });
+      const renameItem = await MenuItem.new({
+        text: "修改显示名称",
+        action: () => onRenameWorkspaceDisplayName(worktree),
       });
       const revealItem = await MenuItem.new({
         text: `在${fileManagerLabel}中显示`,
@@ -151,12 +184,12 @@ export function useSidebarMenus({
         text: "删除工作树",
         action: () => onDeleteWorktree(worktree.id),
       });
-      const menu = await Menu.new({ items: [reloadItem, revealItem, deleteItem] });
-      const window = getCurrentWindow();
+      const menu = await Menu.new({ items: [renameItem, reloadItem, revealItem, deleteItem] });
+      const appWindow = getCurrentWindow();
       const position = new LogicalPosition(event.clientX, event.clientY);
-      await menu.popup(position, window);
+      await menu.popup(position, appWindow);
     },
-    [onReloadWorkspaceThreads, onDeleteWorktree],
+    [onDeleteWorktree, onReloadWorkspaceThreads, onRenameWorkspaceDisplayName],
   );
 
   const showCloneMenu = useCallback(
@@ -167,6 +200,10 @@ export function useSidebarMenus({
       const reloadItem = await MenuItem.new({
         text: "重新加载线程",
         action: () => onReloadWorkspaceThreads(clone.id),
+      });
+      const renameItem = await MenuItem.new({
+        text: "修改显示名称",
+        action: () => onRenameWorkspaceDisplayName(clone),
       });
       const revealItem = await MenuItem.new({
         text: `在${fileManagerLabel}中显示`,
@@ -197,12 +234,12 @@ export function useSidebarMenus({
         text: "删除克隆",
         action: () => onDeleteWorkspace(clone.id),
       });
-      const menu = await Menu.new({ items: [reloadItem, revealItem, deleteItem] });
-      const window = getCurrentWindow();
+      const menu = await Menu.new({ items: [renameItem, reloadItem, revealItem, deleteItem] });
+      const appWindow = getCurrentWindow();
       const position = new LogicalPosition(event.clientX, event.clientY);
-      await menu.popup(position, window);
+      await menu.popup(position, appWindow);
     },
-    [onReloadWorkspaceThreads, onDeleteWorkspace],
+    [onDeleteWorkspace, onReloadWorkspaceThreads, onRenameWorkspaceDisplayName],
   );
 
   return { showThreadMenu, showWorkspaceMenu, showWorktreeMenu, showCloneMenu };

@@ -860,6 +860,90 @@ export function useThreadActions({
     [onDebug],
   );
 
+  const archiveWorkspaceThreads = useCallback(
+    async (workspace: WorkspaceInfo) => {
+      const threadIds = new Set<string>();
+      let workspacePathLookup = buildWorkspacePathLookup([workspace]);
+      try {
+        const knownWorkspaces = await listWorkspacesService();
+        if (knownWorkspaces.length > 0) {
+          workspacePathLookup = buildWorkspacePathLookup([workspace, ...knownWorkspaces]);
+        }
+      } catch {
+        workspacePathLookup = buildWorkspacePathLookup([workspace]);
+      }
+
+      let cursor: string | null = null;
+      let pagesFetched = 0;
+      do {
+        pagesFetched += 1;
+        const response = (await listThreadsService(
+          workspace.id,
+          cursor,
+          THREAD_LIST_PAGE_SIZE,
+          threadSortKey,
+        )) as Record<string, unknown>;
+        const result = (response.result ?? response) as Record<string, unknown>;
+        const data = Array.isArray(result?.data)
+          ? (result.data as Record<string, unknown>[])
+          : [];
+        data.forEach((thread) => {
+          const threadId = String(thread?.id ?? "").trim();
+          if (!threadId) {
+            return;
+          }
+          const cwd = String(thread?.cwd ?? "");
+          const resolvedWorkspaceId = cwd
+            ? resolveWorkspaceIdForThreadPath(
+                cwd,
+                workspacePathLookup,
+                new Set([workspace.id]),
+              )
+            : workspace.id;
+          if (resolvedWorkspaceId === workspace.id) {
+            threadIds.add(threadId);
+          }
+        });
+        cursor = getThreadListNextCursor(result);
+        if (pagesFetched >= 1000) {
+          break;
+        }
+      } while (cursor);
+
+      const archivedThreadIds = Array.from(threadIds);
+      onDebug?.({
+        id: `${Date.now()}-client-workspace-archive`,
+        timestamp: Date.now(),
+        source: "client",
+        label: "workspace/archive threads",
+        payload: { workspaceId: workspace.id, threadCount: archivedThreadIds.length },
+      });
+
+      const successfulThreadIds: string[] = [];
+      for (const threadId of archivedThreadIds) {
+        try {
+          await archiveThreadService(workspace.id, threadId);
+          dispatch({ type: "removeThread", workspaceId: workspace.id, threadId });
+          successfulThreadIds.push(threadId);
+        } catch (error) {
+          onDebug?.({
+            id: `${Date.now()}-client-workspace-archive-error`,
+            timestamp: Date.now(),
+            source: "error",
+            label: "workspace/archive thread error",
+            payload: {
+              workspaceId: workspace.id,
+              threadId,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          });
+        }
+      }
+      return successfulThreadIds;
+    },
+    [dispatch, onDebug, threadSortKey],
+  );
+
   return {
     startThreadForWorkspace,
     forkThreadForWorkspace,
@@ -870,5 +954,6 @@ export function useThreadActions({
     listThreadsForWorkspace,
     loadOlderThreadsForWorkspace,
     archiveThread,
+    archiveWorkspaceThreads,
   };
 }

@@ -1,34 +1,60 @@
-import type { MouseEvent } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import type { WorkspaceInfo } from "../../../types";
+import { getWorkspaceDisplayName } from "../../workspaces/domain/workspaceDisplay";
 
 type WorktreeCardProps = {
   worktree: WorkspaceInfo;
+  worktreeName?: ReactNode;
   isActive: boolean;
   isDeleting?: boolean;
+  isEditingName?: boolean;
+  editingName?: string;
   onSelectWorkspace: (id: string) => void;
   onShowWorktreeMenu: (event: MouseEvent, worktree: WorkspaceInfo) => void;
   onToggleWorkspaceCollapse: (workspaceId: string, collapsed: boolean) => void;
   onConnectWorkspace: (workspace: WorkspaceInfo) => void;
-  children?: React.ReactNode;
+  onStartEditingName?: (workspace: WorkspaceInfo) => void;
+  onEditingNameChange?: (value: string) => void;
+  onCommitEditingName?: () => void;
+  onCancelEditingName?: () => void;
+  children?: ReactNode;
 };
 
 export function WorktreeCard({
   worktree,
+  worktreeName,
   isActive,
   isDeleting = false,
+  isEditingName = false,
+  editingName = "",
   onSelectWorkspace,
   onShowWorktreeMenu,
   onToggleWorkspaceCollapse,
   onConnectWorkspace,
+  onStartEditingName,
+  onEditingNameChange,
+  onCommitEditingName,
+  onCancelEditingName,
   children,
 }: WorktreeCardProps) {
   const worktreeCollapsed = worktree.settings.sidebarCollapsed;
   const worktreeBranch = worktree.worktree?.branch ?? "";
-  const worktreeLabel = worktree.name?.trim() || worktreeBranch;
+  const worktreeLabel = getWorkspaceDisplayName(worktree).trim() || worktreeBranch;
   const worktreeMeta =
     worktreeBranch && worktreeBranch !== worktreeLabel ? worktreeBranch : null;
   const contentCollapsedClass = worktreeCollapsed ? " collapsed" : "";
+  const handleEditingKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onCommitEditingName?.();
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onCancelEditingName?.();
+    }
+  };
 
   return (
     <div className={`worktree-card${isDeleting ? " deleting" : ""}`}>
@@ -38,7 +64,7 @@ export function WorktreeCard({
         tabIndex={isDeleting ? -1 : 0}
         aria-disabled={isDeleting}
         onClick={() => {
-          if (!isDeleting) {
+          if (!isDeleting && !isEditingName) {
             onSelectWorkspace(worktree.id);
           }
         }}
@@ -47,8 +73,14 @@ export function WorktreeCard({
             onShowWorktreeMenu(event, worktree);
           }
         }}
+        onDoubleClick={(event) => {
+          if (!isDeleting) {
+            event.stopPropagation();
+            onStartEditingName?.(worktree);
+          }
+        }}
         onKeyDown={(event) => {
-          if (isDeleting) {
+          if (isDeleting || isEditingName) {
             return;
           }
           if (event.key === "Enter" || event.key === " ") {
@@ -58,7 +90,23 @@ export function WorktreeCard({
         }}
       >
         <div className="worktree-copy">
-          <div className="worktree-label">{worktreeLabel}</div>
+          {isEditingName ? (
+            <input
+              className="worktree-name-input"
+              value={editingName}
+              autoFocus
+              placeholder={worktree.name}
+              onClick={(event) => event.stopPropagation()}
+              onDoubleClick={(event) => event.stopPropagation()}
+              onChange={(event) => onEditingNameChange?.(event.target.value)}
+              onBlur={() => onCommitEditingName?.()}
+              onKeyDown={handleEditingKeyDown}
+              data-tauri-drag-region="false"
+              aria-label="编辑工作树显示名称"
+            />
+          ) : (
+            <div className="worktree-label">{worktreeName ?? worktreeLabel}</div>
+          )}
           {worktreeMeta && <div className="worktree-meta">{worktreeMeta}</div>}
         </div>
         <div className="worktree-actions">

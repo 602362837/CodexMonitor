@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WorkspaceInfo } from "../../../types";
 import { useSidebarMenus } from "./useSidebarMenus";
@@ -43,13 +43,21 @@ vi.mock("../../../services/toasts", () => ({
 }));
 
 describe("useSidebarMenus", () => {
+  beforeEach(() => {
+    menuNew.mockClear();
+    menuItemNew.mockClear();
+    revealItemInDir.mockClear();
+  });
+
   it("adds a show in file manager option for worktrees", async () => {
     const onDeleteThread = vi.fn();
+    const onArchiveWorkspaceThreads = vi.fn(async () => []);
     const onSyncThread = vi.fn();
     const onPinThread = vi.fn();
     const onUnpinThread = vi.fn();
     const isThreadPinned = vi.fn(() => false);
     const onRenameThread = vi.fn();
+    const onRenameWorkspaceDisplayName = vi.fn();
     const onReloadWorkspaceThreads = vi.fn();
     const onDeleteWorkspace = vi.fn();
     const onDeleteWorktree = vi.fn();
@@ -57,11 +65,13 @@ describe("useSidebarMenus", () => {
     const { result } = renderHook(() =>
       useSidebarMenus({
         onDeleteThread,
+        onArchiveWorkspaceThreads,
         onSyncThread,
         onPinThread,
         onUnpinThread,
         isThreadPinned,
         onRenameThread,
+        onRenameWorkspaceDisplayName,
         onReloadWorkspaceThreads,
         onDeleteWorkspace,
         onDeleteWorktree,
@@ -92,11 +102,55 @@ describe("useSidebarMenus", () => {
 
     const menuArgs = menuNew.mock.calls[0]?.[0];
     const revealItem = menuArgs.items.find(
-      (item: { text: string }) => item.text === `Show in ${fileManagerName()}`,
+      (item: { text: string }) => item.text === `在${fileManagerName()}中显示`,
     );
 
     expect(revealItem).toBeDefined();
     await revealItem.action();
     expect(revealItemInDir).toHaveBeenCalledWith("/tmp/worktree-1");
+  });
+
+  it("adds an archive-all option for workspace menus", async () => {
+    const onArchiveWorkspaceThreads = vi.fn(async () => ["thread-1"]);
+    const { result } = renderHook(() =>
+      useSidebarMenus({
+        onDeleteThread: vi.fn(),
+        onArchiveWorkspaceThreads,
+        onSyncThread: vi.fn(),
+        onPinThread: vi.fn(),
+        onUnpinThread: vi.fn(),
+        isThreadPinned: vi.fn(() => false),
+        onRenameThread: vi.fn(),
+        onRenameWorkspaceDisplayName: vi.fn(),
+        onReloadWorkspaceThreads: vi.fn(),
+        onDeleteWorkspace: vi.fn(),
+        onDeleteWorktree: vi.fn(),
+      }),
+    );
+
+    const workspace: WorkspaceInfo = {
+      id: "ws-1",
+      name: "Main Project",
+      path: "/tmp/main",
+      connected: true,
+      settings: { sidebarCollapsed: false },
+    };
+    const event = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      clientX: 12,
+      clientY: 34,
+    } as unknown as ReactMouseEvent;
+
+    await result.current.showWorkspaceMenu(event, workspace);
+
+    const menuArgs = menuNew.mock.calls[0]?.[0];
+    const archiveAllItem = menuArgs.items.find(
+      (item: { text: string }) => item.text === "一键归档全部会话",
+    );
+
+    expect(archiveAllItem).toBeDefined();
+    await archiveAllItem.action();
+    expect(onArchiveWorkspaceThreads).toHaveBeenCalledWith("ws-1");
   });
 });

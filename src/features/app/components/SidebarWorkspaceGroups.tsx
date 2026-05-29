@@ -16,6 +16,7 @@ import { WorkspaceCard } from "./WorkspaceCard";
 import { WorkspaceGroup } from "./WorkspaceGroup";
 import { WorktreeSection } from "./WorktreeSection";
 import { getVisibleThreadListState } from "./threadSearchUtils";
+import { getWorkspaceDisplayName } from "../../workspaces/domain/workspaceDisplay";
 import type {
   SidebarWorkspaceAddMenuAnchor,
   ThreadRowsResult,
@@ -64,10 +65,17 @@ type SidebarWorkspaceGroupsProps = {
   startingDraftThreadWorkspaceId?: string | null;
   onSelectWorkspace: (workspaceId: string) => void;
   onConnectWorkspace: (workspace: WorkspaceInfo) => void;
+  onAssignWorkspaceGroup: (workspaceId: string, groupId: string | null) => void;
   onAddAgent: (workspace: WorkspaceInfo) => void;
   onAddWorktreeAgent: (workspace: WorkspaceInfo) => void;
   onAddCloneAgent: (workspace: WorkspaceInfo) => void;
   onToggleWorkspaceCollapse: (workspaceId: string, collapsed: boolean) => void;
+  onStartEditingWorkspaceName: (workspace: WorkspaceInfo) => void;
+  editingWorkspaceNameId: string | null;
+  editingWorkspaceName: string;
+  onEditingWorkspaceNameChange: (value: string) => void;
+  onCommitEditingWorkspaceName: () => void;
+  onCancelEditingWorkspaceName: () => void;
   onSelectThread: (workspaceId: string, threadId: string) => void;
   onShowThreadMenu: (
     event: MouseEvent,
@@ -75,7 +83,7 @@ type SidebarWorkspaceGroupsProps = {
     threadId: string,
     canPin: boolean,
   ) => void;
-  onShowWorkspaceMenu: (event: MouseEvent, workspaceId: string) => void;
+  onShowWorkspaceMenu: (event: MouseEvent, workspace: WorkspaceInfo) => void;
   onShowWorktreeMenu: (event: MouseEvent, worktree: WorkspaceInfo) => void;
   onShowCloneMenu: (event: MouseEvent, worktree: WorkspaceInfo) => void;
   onToggleExpanded: (workspaceId: string) => void;
@@ -120,6 +128,7 @@ type SidebarWorkspaceEntryProps = Omit<
   | "dropTargetGroupId"
 > & {
   workspace: WorkspaceInfo;
+  workspaceGroups: Array<{ id: string; name: string }>;
 };
 
 function SidebarWorkspaceEntry({
@@ -155,10 +164,18 @@ function SidebarWorkspaceEntry({
   startingDraftThreadWorkspaceId,
   onSelectWorkspace,
   onConnectWorkspace,
+  workspaceGroups,
+  onAssignWorkspaceGroup,
   onAddAgent,
   onAddWorktreeAgent,
   onAddCloneAgent,
   onToggleWorkspaceCollapse,
+  onStartEditingWorkspaceName,
+  editingWorkspaceNameId,
+  editingWorkspaceName,
+  onEditingWorkspaceNameChange,
+  onCommitEditingWorkspaceName,
+  onCancelEditingWorkspaceName,
   onSelectThread,
   onShowThreadMenu,
   onShowWorkspaceMenu,
@@ -175,6 +192,7 @@ function SidebarWorkspaceEntry({
   }
 
   const threads = threadsByWorkspace[workspace.id] ?? [];
+  const workspaceDisplayName = getWorkspaceDisplayName(workspace);
   const isCollapsed = workspace.settings.sidebarCollapsed;
   const isExpanded = expandedWorkspaces.has(workspace.id);
   const workspaceMatchesSearch = isWorkspaceMatch(workspace);
@@ -196,7 +214,7 @@ function SidebarWorkspaceEntry({
   } = getVisibleThreadListState({
     rows: unpinnedRows,
     totalRoots: totalThreadRoots,
-    workspaceName: workspace.name,
+    workspaceName: workspaceDisplayName,
     query: normalizedQuery,
     isSearchActive,
   });
@@ -227,7 +245,7 @@ function SidebarWorkspaceEntry({
   return (
     <WorkspaceCard
       workspace={workspace}
-      workspaceName={renderHighlightedName(workspace.name)}
+      workspaceName={renderHighlightedName(workspaceDisplayName)}
       summary={
         displayThreadRootCount > 0
           ? `${displayThreadRootCount} 个对话${
@@ -236,13 +254,21 @@ function SidebarWorkspaceEntry({
           : "还没有对话"
       }
       isActive={workspace.id === activeWorkspaceId}
+      isEditingName={editingWorkspaceNameId === workspace.id}
+      editingName={editingWorkspaceName}
       isCollapsed={isCollapsed}
       addMenuOpen={addMenuOpen}
       addMenuWidth={addMenuWidth}
       onSelectWorkspace={onSelectWorkspace}
       onShowWorkspaceMenu={onShowWorkspaceMenu}
       onToggleWorkspaceCollapse={onToggleWorkspaceCollapse}
+      onStartEditingName={onStartEditingWorkspaceName}
+      onEditingNameChange={onEditingWorkspaceNameChange}
+      onCommitEditingName={onCommitEditingWorkspaceName}
+      onCancelEditingName={onCancelEditingWorkspaceName}
       onConnectWorkspace={onConnectWorkspace}
+      workspaceGroups={workspaceGroups}
+      onAssignWorkspaceGroup={onAssignWorkspaceGroup}
       onToggleAddMenu={onToggleAddMenu}
       onWorkspaceDragStart={onWorkspaceDragStart}
       onWorkspaceDragEnd={onWorkspaceDragEnd}
@@ -342,6 +368,12 @@ function SidebarWorkspaceEntry({
           onShowWorktreeMenu={onShowCloneMenu}
           onToggleExpanded={onToggleExpanded}
           onLoadOlderThreads={onLoadOlderThreads}
+          onStartEditingWorkspaceName={onStartEditingWorkspaceName}
+          editingWorkspaceNameId={editingWorkspaceNameId}
+          editingWorkspaceName={editingWorkspaceName}
+          onEditingWorkspaceNameChange={onEditingWorkspaceNameChange}
+          onCommitEditingWorkspaceName={onCommitEditingWorkspaceName}
+          onCancelEditingWorkspaceName={onCancelEditingWorkspaceName}
           searchQuery={normalizedQuery}
           isSearchActive={isSearchActive}
           sectionLabel="克隆 agents"
@@ -376,6 +408,12 @@ function SidebarWorkspaceEntry({
           onShowWorktreeMenu={onShowWorktreeMenu}
           onToggleExpanded={onToggleExpanded}
           onLoadOlderThreads={onLoadOlderThreads}
+          onStartEditingWorkspaceName={onStartEditingWorkspaceName}
+          editingWorkspaceNameId={editingWorkspaceNameId}
+          editingWorkspaceName={editingWorkspaceName}
+          onEditingWorkspaceNameChange={onEditingWorkspaceNameChange}
+          onCommitEditingWorkspaceName={onCommitEditingWorkspaceName}
+          onCancelEditingWorkspaceName={onCancelEditingWorkspaceName}
           searchQuery={normalizedQuery}
           isSearchActive={isSearchActive}
         />
@@ -427,6 +465,15 @@ export function SidebarWorkspaceGroups({
   dropTargetGroupId,
   ...entryProps
 }: SidebarWorkspaceGroupsProps) {
+  const workspaceGroups = groups
+    .filter((group): group is WorkspaceGroupSection & { id: string } =>
+      Boolean(group.id),
+    )
+    .map((group) => ({
+      id: group.id,
+      name: group.name,
+    }));
+
   return groups.map((group) => {
     const showGroupHeader = true;
     const toggleId = group.id ?? (showGroupHeader ? ungroupedCollapseId : null);
@@ -458,6 +505,7 @@ export function SidebarWorkspaceGroups({
           <SidebarWorkspaceEntry
             key={workspace.id}
             workspace={workspace}
+            workspaceGroups={workspaceGroups}
             {...entryProps}
           />
         ))}

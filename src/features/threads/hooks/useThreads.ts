@@ -567,6 +567,7 @@ export function useThreads({
     listThreadsForWorkspace,
     loadOlderThreadsForWorkspace,
     archiveThread,
+    archiveWorkspaceThreads: archiveWorkspaceThreadsInternal,
   } = useThreadActions({
     dispatch,
     itemsByThread: state.itemsByThread,
@@ -859,6 +860,17 @@ export function useThreads({
     [archiveThread, unpinThread],
   );
 
+  const archiveWorkspaceThreads = useCallback(
+    async (workspace: WorkspaceInfo) => {
+      const threadIds = await archiveWorkspaceThreadsInternal(workspace);
+      threadIds.forEach((threadId) => {
+        unpinThread(workspace.id, threadId);
+      });
+      return threadIds;
+    },
+    [archiveWorkspaceThreadsInternal, unpinThread],
+  );
+
   return {
     activeThreadId,
     setActiveThreadId,
@@ -886,6 +898,7 @@ export function useThreads({
     refreshAccountInfo,
     interruptTurn,
     removeThread,
+    archiveWorkspaceThreads,
     pinThread,
     unpinThread,
     isThreadPinned,

@@ -22,6 +22,7 @@ type UseSidebarLayoutActionsOptions = {
     patch: Partial<WorkspaceSettings>,
   ) => void | Promise<unknown>;
   removeThread: (workspaceId: string, threadId: string) => void;
+  archiveWorkspaceThreads: (workspace: WorkspaceInfo) => Promise<string[]>;
   clearDraftForThread: (threadId: string) => void;
   removeImagesForThread: (threadId: string) => void;
   refreshThread: (workspaceId: string, threadId: string) => void | Promise<unknown>;
@@ -47,6 +48,7 @@ export function useSidebarLayoutActions({
   workspacesById,
   updateWorkspaceSettings,
   removeThread,
+  archiveWorkspaceThreads,
   clearDraftForThread,
   removeImagesForThread,
   refreshThread,
@@ -106,6 +108,19 @@ export function useSidebarLayoutActions({
     [updateWorkspaceSettings, workspacesById],
   );
 
+  const onRenameWorkspaceDisplayName = useCallback(
+    (workspaceId: string, displayName: string | null) => {
+      const target = workspacesById.get(workspaceId);
+      if (!target) {
+        return;
+      }
+      return updateWorkspaceSettings(workspaceId, {
+        displayName,
+      });
+    },
+    [updateWorkspaceSettings, workspacesById],
+  );
+
   const onSelectThread = useCallback(
     (workspaceId: string, threadId: string) => {
       exitDiffView();
@@ -130,6 +145,27 @@ export function useSidebarLayoutActions({
       removeImagesForThread(threadId);
     },
     [clearDraftForThread, removeImagesForThread, removeThread],
+  );
+
+  const onArchiveWorkspaceThreads = useCallback(
+    async (workspaceId: string) => {
+      const workspace = workspacesById.get(workspaceId);
+      if (!workspace) {
+        return [];
+      }
+      const archivedThreadIds = await archiveWorkspaceThreads(workspace);
+      archivedThreadIds.forEach((threadId) => {
+        clearDraftForThread(threadId);
+        removeImagesForThread(threadId);
+      });
+      return archivedThreadIds;
+    },
+    [
+      archiveWorkspaceThreads,
+      clearDraftForThread,
+      removeImagesForThread,
+      workspacesById,
+    ],
   );
 
   const onSyncThread = useCallback(
@@ -188,8 +224,10 @@ export function useSidebarLayoutActions({
     onSelectWorkspace,
     onConnectWorkspace,
     onToggleWorkspaceCollapse,
+    onRenameWorkspaceDisplayName,
     onSelectThread,
     onDeleteThread,
+    onArchiveWorkspaceThreads,
     onSyncThread,
     onRenameThread,
     onDeleteWorkspace,

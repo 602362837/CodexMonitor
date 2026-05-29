@@ -8,6 +8,7 @@ import {
   PopoverMenuItem,
   PopoverSurface,
 } from "../../design-system/components/popover/PopoverPrimitives";
+import { getWorkspaceDisplayName } from "../../workspaces/domain/workspaceDisplay";
 import { PinnedThreadList } from "./PinnedThreadList";
 import type { SidebarOverlayMenuAnchor, ThreadBucket } from "./sidebarTypes";
 
@@ -112,7 +113,7 @@ export function SidebarThreadsOnlySection({
                 }}
                 icon={<Plus aria-hidden />}
               >
-                {workspace.name}
+                {getWorkspaceDisplayName(workspace)}
               </PopoverMenuItem>
             ))}
           </PopoverSurface>,

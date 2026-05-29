@@ -873,10 +873,9 @@
 
 .workspace-actions {
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
   padding-top: 2px;
 }
@@ -889,6 +888,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.workspace-name-input,
+.worktree-name-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  background: var(--surface-card);
+  color: var(--text-strong);
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+  padding: 2px 6px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--border-accent) 18%, transparent);
+  -webkit-app-region: no-drag;
+}
+
+.workspace-name-input {
+  font-size: 14px;
+  line-height: 1.15;
+}
+
+.worktree-name-input {
+  font-size: 13px;
+  line-height: 1.2;
 }
 
 .workspace-name-match {
@@ -960,9 +985,33 @@
 
 .workspace-title {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
   min-width: 0;
+}
+
+.workspace-group-select {
+  max-width: 82px;
+  min-width: 58px;
+  height: 20px;
+  border: 1px solid var(--border-quiet);
+  border-radius: 5px;
+  background: var(--cm-surface-panel-loud);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1;
+  padding: 0 16px 0 5px;
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.workspace-group-select:hover,
+.workspace-group-select:focus {
+  color: var(--text-strong);
+  border-color: var(--border-stronger);
+  outline: none;
 }
 
 .workspace-toggle {

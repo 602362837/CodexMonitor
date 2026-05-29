@@ -68,12 +68,21 @@ fn normalize_optional_windows_namespace_path(path: Option<String>) -> (Option<St
 fn normalize_workspace_settings(settings: WorkspaceSettings) -> (WorkspaceSettings, bool) {
     let (worktrees_folder, changed) =
         normalize_optional_windows_namespace_path(settings.worktrees_folder.clone());
+    let display_name = settings
+        .display_name
+        .clone()
+        .and_then(|name| {
+            let trimmed = name.trim().to_string();
+            (!trimmed.is_empty()).then_some(trimmed)
+        });
+    let display_name_changed = display_name != settings.display_name;
     (
         WorkspaceSettings {
+            display_name,
             worktrees_folder,
             ..settings
         },
-        changed,
+        changed || display_name_changed,
     )
 }
 

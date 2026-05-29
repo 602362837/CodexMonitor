@@ -11,16 +11,24 @@ use crate::git_utils::{
 };
 use crate::shared::process_core::tokio_command;
 use crate::types::{BranchInfo, WorkspaceEntry};
-use crate::utils::{git_env_path, normalize_git_path, resolve_git_binary};
+use crate::utils::{
+    apply_git_system_proxy_env, git_env_path, git_should_use_system_proxy, normalize_git_path,
+    resolve_git_binary,
+};
 
 use super::context::workspace_entry_for_id;
 
 async fn run_git_command(repo_root: &Path, args: &[&str]) -> Result<(), String> {
     let git_bin = resolve_git_binary().map_err(|e| format!("Failed to run git: {e}"))?;
-    let output = tokio_command(git_bin)
+    let mut command = tokio_command(git_bin);
+    command
         .args(args)
         .current_dir(repo_root)
-        .env("PATH", git_env_path())
+        .env("PATH", git_env_path());
+    if git_should_use_system_proxy(Some(repo_root), args) {
+        apply_git_system_proxy_env(&mut command);
+    }
+    let output = command
         .output()
         .await
         .map_err(|e| format!("Failed to run git: {e}"))?;

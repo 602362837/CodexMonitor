@@ -9,7 +9,7 @@ import type {
   WorkspaceGroup,
   WorkspaceInfo,
 } from "../../../types";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, MouseEvent, RefObject } from "react";
 import { FolderOpen } from "lucide-react";
 import { pushErrorToast } from "../../../services/toasts";
@@ -45,6 +45,7 @@ import {
 } from "../utils/usageLabels";
 import { formatRelativeTimeShort } from "../../../utils/time";
 import type { ThreadStatusById } from "../../../utils/threadStatus";
+import { getWorkspaceDisplayName } from "../../workspaces/domain/workspaceDisplay";
 
 const COLLAPSED_GROUPS_STORAGE_KEY = "codexmonitor.collapsedGroups";
 const UNGROUPED_COLLAPSE_ID = "__ungrouped__";
@@ -142,8 +143,13 @@ type SidebarProps = {
   onAddWorktreeAgent: (workspace: WorkspaceInfo) => void;
   onAddCloneAgent: (workspace: WorkspaceInfo) => void;
   onToggleWorkspaceCollapse: (workspaceId: string, collapsed: boolean) => void;
+  onRenameWorkspaceDisplayName: (
+    workspaceId: string,
+    displayName: string | null,
+  ) => void | Promise<unknown>;
   onSelectThread: (workspaceId: string, threadId: string) => void;
   onDeleteThread: (workspaceId: string, threadId: string) => void;
+  onArchiveWorkspaceThreads: (workspaceId: string) => Promise<string[]>;
   onSyncThread: (workspaceId: string, threadId: string) => void;
   pinThread: (workspaceId: string, threadId: string) => boolean;
   unpinThread: (workspaceId: string, threadId: string) => void;
@@ -210,8 +216,10 @@ export const Sidebar = memo(function Sidebar({
   onAddWorktreeAgent,
   onAddCloneAgent,
   onToggleWorkspaceCollapse,
+  onRenameWorkspaceDisplayName,
   onSelectThread,
   onDeleteThread,
+  onArchiveWorkspaceThreads,
   onSyncThread,
   pinThread,
   unpinThread,
@@ -238,6 +246,12 @@ export const Sidebar = memo(function Sidebar({
   const [expandedWorkspaces, setExpandedWorkspaces] = useState(
     new Set<string>(),
   );
+  const [editingWorkspaceNameId, setEditingWorkspaceNameId] = useState<string | null>(
+    null,
+  );
+  const [editingWorkspaceName, setEditingWorkspaceName] = useState("");
+  const committingWorkspaceNameIdRef = useRef<string | null>(null);
+  const cancelledWorkspaceNameIdRef = useRef<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [addMenuAnchor, setAddMenuAnchor] =
@@ -262,14 +276,21 @@ export const Sidebar = memo(function Sidebar({
     COLLAPSED_GROUPS_STORAGE_KEY,
   );
   const { getThreadRows } = useThreadRows(threadParentById);
+  const handleStartEditingWorkspaceName = useCallback((workspace: WorkspaceInfo) => {
+    cancelledWorkspaceNameIdRef.current = null;
+    setEditingWorkspaceNameId(workspace.id);
+    setEditingWorkspaceName(workspace.settings.displayName?.trim() || workspace.name);
+  }, []);
   const { showThreadMenu, showWorkspaceMenu, showWorktreeMenu, showCloneMenu } =
     useSidebarMenus({
       onDeleteThread,
+      onArchiveWorkspaceThreads,
       onSyncThread,
       onPinThread: pinThread,
       onUnpinThread: unpinThread,
       isThreadPinned,
       onRenameThread,
+      onRenameWorkspaceDisplayName: handleStartEditingWorkspaceName,
       onReloadWorkspaceThreads,
       onDeleteWorkspace,
       onDeleteWorktree,
@@ -304,7 +325,7 @@ export const Sidebar = memo(function Sidebar({
 
   const isWorkspaceMatch = useCallback(
     (workspace: WorkspaceInfo) => {
-      return workspaceMatchesQuery(workspace.name, normalizedQuery);
+      return workspaceMatchesQuery(getWorkspaceDisplayName(workspace), normalizedQuery);
     },
     [normalizedQuery],
   );
@@ -318,7 +339,9 @@ export const Sidebar = memo(function Sidebar({
       const threads = threadsByWorkspace[workspace.id] ?? [];
       result.set(
         workspace.id,
-        threads.some((thread) => threadMatchesQuery(thread, workspace.name, normalizedQuery)),
+        threads.some((thread) =>
+          threadMatchesQuery(thread, getWorkspaceDisplayName(workspace), normalizedQuery),
+        ),
       );
     });
     return result;
@@ -432,7 +455,7 @@ export const Sidebar = memo(function Sidebar({
         groups.push({
           pinTime,
           workspaceId: workspace.id,
-          workspaceName: workspace.name,
+          workspaceName: getWorkspaceDisplayName(workspace),
           rows: group.rows,
         });
       });
@@ -649,15 +672,16 @@ export const Sidebar = memo(function Sidebar({
         }
 
         splitRowsByRoot(unpinnedRows).forEach((group) => {
+          const workspaceName = getWorkspaceDisplayName(workspace);
           rootGroups.push({
             rootTimestamp: getSortTimestamp(group.root.thread),
-            workspaceName: workspace.name,
+            workspaceName,
             workspaceId: workspace.id,
             rootIndex: group.rootIndex,
             rows: group.rows.map((row) => ({
               ...row,
               workspaceId: workspace.id,
-              workspaceName: workspace.name,
+              workspaceName,
             })),
           });
         });
@@ -726,7 +750,7 @@ export const Sidebar = memo(function Sidebar({
   const workspaceNameById = useMemo(() => {
     const byId = new Map<string, string>();
     workspaces.forEach((workspace) => {
-      byId.set(workspace.id, workspace.name);
+      byId.set(workspace.id, getWorkspaceDisplayName(workspace));
     });
     return byId;
   }, [workspaces]);
@@ -861,6 +885,55 @@ export const Sidebar = memo(function Sidebar({
     }
   }, [editingGroupId, groupedWorkspaces, handleCancelEditingGroup]);
 
+  const handleCancelEditingWorkspaceName = useCallback(() => {
+    cancelledWorkspaceNameIdRef.current = editingWorkspaceNameId;
+    setEditingWorkspaceNameId(null);
+    setEditingWorkspaceName("");
+    committingWorkspaceNameIdRef.current = null;
+  }, [editingWorkspaceNameId]);
+
+  const handleCommitEditingWorkspaceName = useCallback(() => {
+    const workspaceId = editingWorkspaceNameId;
+    if (!workspaceId || committingWorkspaceNameIdRef.current === workspaceId) {
+      return;
+    }
+    if (cancelledWorkspaceNameIdRef.current === workspaceId) {
+      cancelledWorkspaceNameIdRef.current = null;
+      return;
+    }
+    committingWorkspaceNameIdRef.current = workspaceId;
+    const nextDisplayName = editingWorkspaceName.trim() || null;
+    void Promise.resolve(onRenameWorkspaceDisplayName(workspaceId, nextDisplayName))
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        pushErrorToast({
+          title: "显示名称保存失败",
+          message,
+        });
+      })
+      .finally(() => {
+        if (committingWorkspaceNameIdRef.current === workspaceId) {
+          committingWorkspaceNameIdRef.current = null;
+        }
+        setEditingWorkspaceNameId((current) => (current === workspaceId ? null : current));
+        setEditingWorkspaceName((current) =>
+          editingWorkspaceNameId === workspaceId ? "" : current,
+        );
+      });
+  }, [editingWorkspaceName, editingWorkspaceNameId, onRenameWorkspaceDisplayName]);
+
+  useEffect(() => {
+    if (!editingWorkspaceNameId) {
+      return;
+    }
+    const stillExists = workspaces.some(
+      (workspace) => workspace.id === editingWorkspaceNameId,
+    );
+    if (!stillExists) {
+      handleCancelEditingWorkspaceName();
+    }
+  }, [editingWorkspaceNameId, handleCancelEditingWorkspaceName, workspaces]);
+
   const handleDeleteWorkspaceGroup = useCallback(
     (groupId: string, currentName: string) => {
       const confirmed = window.confirm(
@@ -878,7 +951,7 @@ export const Sidebar = memo(function Sidebar({
     (event: DragEvent<HTMLDivElement>, workspace: WorkspaceInfo) => {
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData(WORKSPACE_DRAG_DATA_TYPE, workspace.id);
-      event.dataTransfer.setData("text/plain", workspace.name);
+      event.dataTransfer.setData("text/plain", getWorkspaceDisplayName(workspace));
     },
     [],
   );
@@ -946,6 +1019,13 @@ export const Sidebar = memo(function Sidebar({
       void onAssignWorkspaceGroup(workspaceId, groupId).catch(showWorkspaceGroupError);
     },
     [hasWorkspaceDragData, onAssignWorkspaceGroup, showWorkspaceGroupError],
+  );
+
+  const handleAssignWorkspaceGroup = useCallback(
+    (workspaceId: string, groupId: string | null) => {
+      void onAssignWorkspaceGroup(workspaceId, groupId).catch(showWorkspaceGroupError);
+    },
+    [onAssignWorkspaceGroup, showWorkspaceGroupError],
   );
 
   const worktreesByParent = useMemo(() => {
@@ -1198,6 +1278,7 @@ export const Sidebar = memo(function Sidebar({
                   startingDraftThreadWorkspaceId={startingDraftThreadWorkspaceId}
                   onSelectWorkspace={onSelectWorkspace}
                   onConnectWorkspace={onConnectWorkspace}
+                  onAssignWorkspaceGroup={handleAssignWorkspaceGroup}
                   onAddAgent={onAddAgent}
                   onAddWorktreeAgent={onAddWorktreeAgent}
                   onAddCloneAgent={onAddCloneAgent}
@@ -1210,6 +1291,12 @@ export const Sidebar = memo(function Sidebar({
                   onToggleExpanded={handleToggleExpanded}
                   onLoadOlderThreads={onLoadOlderThreads}
                   onToggleAddMenu={setAddMenuAnchor}
+                  onStartEditingWorkspaceName={handleStartEditingWorkspaceName}
+                  editingWorkspaceNameId={editingWorkspaceNameId}
+                  editingWorkspaceName={editingWorkspaceName}
+                  onEditingWorkspaceNameChange={setEditingWorkspaceName}
+                  onCommitEditingWorkspaceName={handleCommitEditingWorkspaceName}
+                  onCancelEditingWorkspaceName={handleCancelEditingWorkspaceName}
                   editingGroupId={editingGroupId}
                   editingGroupName={editingGroupName}
                   onEditingGroupNameChange={setEditingGroupName}

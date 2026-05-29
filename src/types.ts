@@ -1,5 +1,6 @@
 export type WorkspaceSettings = {
   sidebarCollapsed: boolean;
+  displayName?: string | null;
   sortOrder?: number | null;
   groupId?: string | null;
   cloneSourceWorkspaceId?: string | null;

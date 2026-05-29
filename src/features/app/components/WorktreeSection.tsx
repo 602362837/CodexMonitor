@@ -3,6 +3,7 @@ import type { MouseEvent, ReactNode } from "react";
 
 import type { ThreadSummary, WorkspaceInfo } from "../../../types";
 import type { ThreadStatusById } from "../../../utils/threadStatus";
+import { getWorkspaceDisplayName } from "../../workspaces/domain/workspaceDisplay";
 import { ThreadList } from "./ThreadList";
 import { ThreadLoading } from "./ThreadLoading";
 import { WorktreeCard } from "./WorktreeCard";
@@ -42,6 +43,12 @@ type WorktreeSectionProps = {
   onSelectWorkspace: (id: string) => void;
   onConnectWorkspace: (workspace: WorkspaceInfo) => void;
   onToggleWorkspaceCollapse: (workspaceId: string, collapsed: boolean) => void;
+  onStartEditingWorkspaceName?: (workspace: WorkspaceInfo) => void;
+  editingWorkspaceNameId?: string | null;
+  editingWorkspaceName?: string;
+  onEditingWorkspaceNameChange?: (value: string) => void;
+  onCommitEditingWorkspaceName?: () => void;
+  onCancelEditingWorkspaceName?: () => void;
   onSelectThread: (workspaceId: string, threadId: string) => void;
   onShowThreadMenu: (
     event: MouseEvent,
@@ -80,6 +87,12 @@ export function WorktreeSection({
   onSelectWorkspace,
   onConnectWorkspace,
   onToggleWorkspaceCollapse,
+  onStartEditingWorkspaceName,
+  editingWorkspaceNameId = null,
+  editingWorkspaceName = "",
+  onEditingWorkspaceNameChange,
+  onCommitEditingWorkspaceName,
+  onCancelEditingWorkspaceName,
   onSelectThread,
   onShowThreadMenu,
   onShowWorktreeMenu,
@@ -108,6 +121,7 @@ export function WorktreeSection({
       </div>
       <div className="worktree-list">
         {worktrees.map((worktree) => {
+          const worktreeDisplayName = getWorkspaceDisplayName(worktree);
           const worktreeThreads = threadsByWorkspace[worktree.id] ?? [];
           const isLoadingWorktreeThreads =
             threadListLoadingByWorkspace[worktree.id] ?? false;
@@ -135,7 +149,7 @@ export function WorktreeSection({
           } = getVisibleThreadListState({
             rows: unpinnedRows,
             totalRoots: totalWorktreeRoots,
-            workspaceName: worktree.name,
+            workspaceName: worktreeDisplayName,
             query: searchQuery,
             isSearchActive,
           });
@@ -148,10 +162,16 @@ export function WorktreeSection({
               worktree={worktree}
               isActive={worktree.id === activeWorkspaceId}
               isDeleting={deletingWorktreeIds.has(worktree.id)}
+              isEditingName={editingWorkspaceNameId === worktree.id}
+              editingName={editingWorkspaceName}
               onSelectWorkspace={onSelectWorkspace}
               onShowWorktreeMenu={onShowWorktreeMenu}
               onToggleWorkspaceCollapse={onToggleWorkspaceCollapse}
               onConnectWorkspace={onConnectWorkspace}
+              onStartEditingName={onStartEditingWorkspaceName}
+              onEditingNameChange={onEditingWorkspaceNameChange}
+              onCommitEditingName={onCommitEditingWorkspaceName}
+              onCancelEditingName={onCancelEditingWorkspaceName}
             >
               {showWorktreeThreadList && (
                 <ThreadList

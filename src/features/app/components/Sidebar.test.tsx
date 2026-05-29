@@ -48,8 +48,10 @@ const baseProps = {
   onAddWorktreeAgent: vi.fn(),
   onAddCloneAgent: vi.fn(),
   onToggleWorkspaceCollapse: vi.fn(),
+  onRenameWorkspaceDisplayName: vi.fn(),
   onSelectThread: vi.fn(),
   onDeleteThread: vi.fn(),
+  onArchiveWorkspaceThreads: vi.fn(async () => []),
   onSyncThread: vi.fn(),
   pinThread: vi.fn(() => false),
   unpinThread: vi.fn(),
@@ -237,6 +239,55 @@ describe("Sidebar", () => {
     expect(renderedNames[1]).toBe("Older thread");
     expect(screen.getByText("Alpha Project")).toBeTruthy();
     expect(screen.getByText("Beta Project")).toBeTruthy();
+  });
+
+  it("uses workspace display names and edits them inline from the sidebar", async () => {
+    const onRenameWorkspaceDisplayName = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Sidebar
+        {...baseProps}
+        onRenameWorkspaceDisplayName={onRenameWorkspaceDisplayName}
+        workspaces={[
+          {
+            id: "ws-1",
+            name: "folder-name",
+            path: "/tmp/folder-name",
+            connected: true,
+            settings: { sidebarCollapsed: false, displayName: "Friendly Name" },
+          },
+        ]}
+        groupedWorkspaces={[
+          {
+            id: null,
+            name: "Workspaces",
+            workspaces: [
+              {
+                id: "ws-1",
+                name: "folder-name",
+                path: "/tmp/folder-name",
+                connected: true,
+                settings: { sidebarCollapsed: false, displayName: "Friendly Name" },
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Friendly Name")).toBeTruthy();
+    expect(screen.queryByText("folder-name")).toBeNull();
+
+    fireEvent.doubleClick(screen.getByText("Friendly Name"));
+    const input = screen.getByLabelText("编辑工作区显示名称") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Renamed Project" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() => {
+      expect(onRenameWorkspaceDisplayName).toHaveBeenCalledWith(
+        "ws-1",
+        "Renamed Project",
+      );
+    });
   });
 
   it("keeps a project visible when its thread matches the search query", async () => {
@@ -757,6 +808,56 @@ describe("Sidebar", () => {
     expect(screen.getByText("Clone Agent")).toBeTruthy();
     expect(container.querySelectorAll(".workspace-row")).toHaveLength(1);
     expect(container.querySelectorAll(".worktree-row")).toHaveLength(1);
+  });
+
+  it("assigns a project group from the workspace row selector", () => {
+    const onAssignWorkspaceGroup = vi.fn().mockResolvedValue(true);
+
+    render(
+      <Sidebar
+        {...baseProps}
+        onAssignWorkspaceGroup={onAssignWorkspaceGroup}
+        workspaces={[
+          {
+            id: "ws-1",
+            name: "Main Project",
+            path: "/tmp/main",
+            connected: true,
+            settings: { sidebarCollapsed: false, groupId: "group-a" },
+          },
+        ]}
+        groupedWorkspaces={[
+          {
+            id: "group-a",
+            name: "Group A",
+            workspaces: [
+              {
+                id: "ws-1",
+                name: "Main Project",
+                path: "/tmp/main",
+                connected: true,
+                settings: { sidebarCollapsed: false, groupId: "group-a" },
+              },
+            ],
+          },
+          {
+            id: "group-b",
+            name: "Group B",
+            workspaces: [],
+          },
+          {
+            id: null,
+            name: "Ungrouped",
+            workspaces: [],
+          },
+        ]}
+      />,
+    );
+
+    const selector = screen.getByLabelText("修改 Main Project 分组");
+    fireEvent.change(selector, { target: { value: "group-b" } });
+
+    expect(onAssignWorkspaceGroup).toHaveBeenCalledWith("ws-1", "group-b");
   });
 
   it("sorts by project activity using clone-thread activity for the source project", () => {

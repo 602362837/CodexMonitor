@@ -315,6 +315,8 @@ pub(crate) struct WorkspaceGroup {
 pub(crate) struct WorkspaceSettings {
     #[serde(default, rename = "sidebarCollapsed")]
     pub(crate) sidebar_collapsed: bool,
+    #[serde(default, rename = "displayName")]
+    pub(crate) display_name: Option<String>,
     #[serde(default, rename = "sortOrder")]
     pub(crate) sort_order: Option<u32>,
     #[serde(default, rename = "groupId")]

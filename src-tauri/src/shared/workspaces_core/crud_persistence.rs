@@ -558,6 +558,10 @@ where
     FutSpawn: Future<Output = Result<Arc<WorkspaceSession>, String>>,
 {
     settings.worktree_setup_script = normalize_setup_script(settings.worktree_setup_script);
+    settings.display_name = settings.display_name.and_then(|name| {
+        let trimmed = name.trim().to_string();
+        (!trimmed.is_empty()).then_some(trimmed)
+    });
     settings.worktrees_folder = settings
         .worktrees_folder
         .map(|path| normalize_windows_namespace_path(&path));
