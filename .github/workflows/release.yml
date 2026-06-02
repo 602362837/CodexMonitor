@@ -2,6 +2,21 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing release tag to upload into. Leave empty to use v<tauri version>."
+        required: false
+        default: ""
+      upload_existing:
+        description: "Upload artifacts into an existing GitHub release instead of creating a new release."
+        required: true
+        type: boolean
+        default: true
+      include_linux:
+        description: "Build Linux artifacts for a full new release."
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -9,14 +24,24 @@ permissions:
 
 jobs:
   build_macos:
-    runs-on: macos-latest
+    name: macOS bundle (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     environment: release
     env:
+      MACOS_ARCH: ${{ matrix.arch }}
       CODESIGN_IDENTITY: ${{ vars.CODESIGN_IDENTITY }}
       NOTARY_PROFILE_NAME: ${{ vars.NOTARY_PROFILE_NAME }}
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       TAURI_SIGNING_PRIVATE_KEY_B64: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_B64 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            runner: macos-15
+          - arch: x86_64
+            runner: macos-15-intel
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -128,6 +153,7 @@ jobs:
           PY
           )
 
+          ARCH="${MACOS_ARCH}"
           mkdir -p release-artifacts release-artifacts/dmg-root
           rm -rf "release-artifacts/dmg-root/Codex Monitor.app"
           ditto "src-tauri/target/release/bundle/macos/Codex Monitor.app" \
@@ -135,39 +161,41 @@ jobs:
 
           ditto -c -k --keepParent \
             "src-tauri/target/release/bundle/macos/Codex Monitor.app" \
-            release-artifacts/CodexMonitor.zip
+            "release-artifacts/CodexMonitor_${VERSION}_${ARCH}.zip"
 
           hdiutil create -volname "Codex Monitor" \
             -srcfolder release-artifacts/dmg-root \
             -ov -format UDZO \
-            release-artifacts/CodexMonitor_${VERSION}_aarch64.dmg
+            "release-artifacts/CodexMonitor_${VERSION}_${ARCH}.dmg"
 
+          TAR_NAME="CodexMonitor_${VERSION}_${ARCH}.app.tar.gz"
           COPYFILE_DISABLE=1 tar -czf \
-            "src-tauri/target/release/bundle/macos/Codex Monitor.app.tar.gz" \
+            "src-tauri/target/release/bundle/macos/${TAR_NAME}" \
             -C src-tauri/target/release/bundle/macos "Codex Monitor.app"
 
           npm run tauri signer sign -- \
             -f "$HOME/.tauri/codexmonitor.key" \
             -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \
-            "src-tauri/target/release/bundle/macos/Codex Monitor.app.tar.gz"
+            "src-tauri/target/release/bundle/macos/${TAR_NAME}"
 
-          cp "src-tauri/target/release/bundle/macos/Codex Monitor.app.tar.gz" \
-            release-artifacts/CodexMonitor.app.tar.gz
-          cp "src-tauri/target/release/bundle/macos/Codex Monitor.app.tar.gz.sig" \
-            release-artifacts/CodexMonitor.app.tar.gz.sig
+          cp "src-tauri/target/release/bundle/macos/${TAR_NAME}" \
+            "release-artifacts/${TAR_NAME}"
+          cp "src-tauri/target/release/bundle/macos/${TAR_NAME}.sig" \
+            "release-artifacts/${TAR_NAME}.sig"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-artifacts
+          name: macos-artifacts-${{ matrix.arch }}
           path: |
-            release-artifacts/CodexMonitor.zip
-            release-artifacts/CodexMonitor_*_aarch64.dmg
-            release-artifacts/CodexMonitor.app.tar.gz
-            release-artifacts/CodexMonitor.app.tar.gz.sig
+            release-artifacts/CodexMonitor_*_${{ matrix.arch }}.zip
+            release-artifacts/CodexMonitor_*_${{ matrix.arch }}.dmg
+            release-artifacts/CodexMonitor_*_${{ matrix.arch }}.app.tar.gz
+            release-artifacts/CodexMonitor_*_${{ matrix.arch }}.app.tar.gz.sig
 
   build_linux:
     name: linux bundles (${{ matrix.arch }})
+    if: ${{ inputs.include_linux && !inputs.upload_existing }}
     runs-on: ${{ matrix.platform }}
     environment: release
     env:
@@ -264,8 +292,8 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
-      - name: Install LLVM (bindgen)
-        run: choco install llvm -y --no-progress
+      - name: Install CMake and LLVM (bindgen)
+        run: choco install cmake llvm -y --no-progress
 
       - name: Configure LLVM (bindgen)
         run: |
@@ -310,6 +338,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     environment: release
+    if: ${{ always() }}
     needs:
       - build_macos
       - build_linux
@@ -320,13 +349,65 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate required build jobs
+        env:
+          NEEDS_CONTEXT: ${{ toJson(needs) }}
+          UPLOAD_EXISTING: ${{ inputs.upload_existing }}
+          INCLUDE_LINUX: ${{ inputs.include_linux }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+
+          needs = json.loads(os.environ["NEEDS_CONTEXT"])
+          upload_existing = os.environ["UPLOAD_EXISTING"] == "true"
+          include_linux = os.environ["INCLUDE_LINUX"] == "true"
+
+          required = ["build_macos", "build_windows"]
+          if include_linux and not upload_existing:
+              required.append("build_linux")
+
+          failed = [
+              f"{job}={needs.get(job, {}).get('result')}"
+              for job in required
+              if needs.get(job, {}).get("result") != "success"
+          ]
+          if failed:
+              raise SystemExit("Required build job(s) did not succeed: " + ", ".join(failed))
+
+          print("Required build jobs succeeded: " + ", ".join(required))
+          PY
+
+      - name: Resolve release metadata
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("src-tauri/tauri.conf.json").read_text())
+          print(data["version"])
+          PY
+          )
+
+          RELEASE_TAG="${{ inputs.release_tag }}"
+          if [ -z "$RELEASE_TAG" ]; then
+            RELEASE_TAG="v${VERSION}"
+          fi
+
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
+
       - name: Download macOS artifacts
         uses: actions/download-artifact@v4
         with:
-          name: macos-artifacts
+          pattern: macos-artifacts-*
           path: release-artifacts
+          merge-multiple: true
 
       - name: Download Linux bundles
+        if: ${{ inputs.include_linux && !inputs.upload_existing }}
         uses: actions/download-artifact@v4
         with:
           pattern: linux-bundles-*
@@ -359,6 +440,7 @@ jobs:
           done < <(find release-artifacts -type f -name '* *' -print0)
 
       - name: Validate RPM artifacts
+        if: ${{ inputs.include_linux && !inputs.upload_existing }}
         run: |
           set -euo pipefail
           sudo apt-get update
@@ -375,18 +457,9 @@ jobs:
           done
 
       - name: Build latest.json
+        if: ${{ !inputs.upload_existing }}
         run: |
           set -euo pipefail
-          VERSION=$(python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          data = json.loads(Path("src-tauri/tauri.conf.json").read_text())
-          print(data["version"])
-          PY
-          )
-
-          SIGNATURE=$(cat release-artifacts/CodexMonitor.app.tar.gz.sig)
           LAST_TAG=$(git tag --sort=-version:refname \
             | grep -v "^v${VERSION}$" \
             | head -n 1 || true)
@@ -444,14 +517,26 @@ jobs:
           artifacts_dir = Path("release-artifacts")
 
           def release_url(filename):
-            return f"https://github.com/Dimillian/CodexMonitor/releases/download/v${VERSION}/{quote(filename)}"
+            return f"https://github.com/Dimillian/CodexMonitor/releases/download/${RELEASE_TAG}/{quote(filename)}"
 
-          platforms = {
-            "darwin-aarch64": {
-              "url": release_url("CodexMonitor.app.tar.gz"),
-              "signature": "${SIGNATURE}",
-            }
+          platforms = {}
+
+          mac_arches = {
+            "aarch64": "darwin-aarch64",
+            "x86_64": "darwin-x86_64",
           }
+          for arch, platform in mac_arches.items():
+            candidates = sorted(artifacts_dir.rglob(f"CodexMonitor_*_{arch}.app.tar.gz"))
+            if not candidates:
+              raise SystemExit(f"No macOS updater archive found for {arch}")
+            archive = candidates[0]
+            sig_path = archive.with_suffix(archive.suffix + ".sig")
+            if not sig_path.exists():
+              raise SystemExit(f"Missing signature for {archive.name}")
+            platforms[platform] = {
+              "url": release_url(archive.name),
+              "signature": sig_path.read_text().strip(),
+            }
 
           appimages = list(artifacts_dir.rglob("*.AppImage.tar.gz"))
           if not appimages:
@@ -521,6 +606,7 @@ jobs:
           PY
 
       - name: Validate latest.json artifact references
+        if: ${{ !inputs.upload_existing }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -549,25 +635,36 @@ jobs:
           print(f"Validated {len(payload.get('platforms', {}))} latest.json platform URL(s).")
           PY
 
-      - name: Create GitHub release
+      - name: Upload artifacts to existing GitHub release
+        if: ${{ inputs.upload_existing }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          VERSION=$(python3 - <<'PY'
-          import json
-          from pathlib import Path
+          shopt -s nullglob globstar
+          mapfile -t release_files < <(find release-artifacts -type f | sort)
+          if [ ${#release_files[@]} -eq 0 ]; then
+            echo "No artifacts found for release upload"
+            exit 1
+          fi
 
-          data = json.loads(Path("src-tauri/tauri.conf.json").read_text())
-          print(data["version"])
-          PY
-          )
+          gh release view "$RELEASE_TAG" >/dev/null
+          gh release upload "$RELEASE_TAG" "${release_files[@]}" --clobber
 
+      - name: Create GitHub release
+        if: ${{ !inputs.upload_existing }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
           shopt -s nullglob globstar
           appimages=(release-artifacts/**/*.AppImage*)
           mapfile -t rpms < <(find release-artifacts -type f -name '*.rpm' | sort)
           mapfile -t windows_exes < <(find release-artifacts -type f -name '*.exe*' | sort)
           mapfile -t windows_msis < <(find release-artifacts -type f -name '*.msi*' | sort)
+          mapfile -t mac_zips < <(find release-artifacts -type f -name 'CodexMonitor_*.zip' | sort)
+          mapfile -t mac_dmgs < <(find release-artifacts -type f -name 'CodexMonitor_*.dmg' | sort)
+          mapfile -t mac_updaters < <(find release-artifacts -type f -name 'CodexMonitor_*.app.tar.gz*' | sort)
           if [ ${#rpms[@]} -eq 0 ]; then
             echo "No RPM artifacts found for release upload"
             find release-artifacts -type f | sort
@@ -583,15 +680,19 @@ jobs:
             find release-artifacts -type f | sort
             exit 1
           fi
+          if [ ${#mac_dmgs[@]} -lt 2 ]; then
+            echo "Expected both macOS DMG artifacts for release upload"
+            find release-artifacts -type f | sort
+            exit 1
+          fi
 
-          gh release create "v${VERSION}" \
+          gh release create "$RELEASE_TAG" \
             --title "v${VERSION}" \
             --notes-file release-artifacts/release-notes.md \
             --target "$GITHUB_SHA" \
-            release-artifacts/CodexMonitor.zip \
-            release-artifacts/CodexMonitor_*_aarch64.dmg \
-            release-artifacts/CodexMonitor.app.tar.gz \
-            release-artifacts/CodexMonitor.app.tar.gz.sig \
+            "${mac_zips[@]}" \
+            "${mac_dmgs[@]}" \
+            "${mac_updaters[@]}" \
             "${appimages[@]}" \
             "${rpms[@]}" \
             "${windows_exes[@]}" \
@@ -599,6 +700,7 @@ jobs:
             release-artifacts/latest.json
 
       - name: Bump version and open PR
+        if: ${{ !inputs.upload_existing }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
