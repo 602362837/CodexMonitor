@@ -17,6 +17,11 @@ on:
         required: true
         type: boolean
         default: true
+      sign_artifacts:
+        description: "Use Apple notarization and Tauri updater signing secrets. Disable for supplemental unsigned assets."
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -29,6 +34,7 @@ jobs:
     environment: release
     env:
       MACOS_ARCH: ${{ matrix.arch }}
+      SIGN_ARTIFACTS: ${{ inputs.sign_artifacts }}
       CODESIGN_IDENTITY: ${{ vars.CODESIGN_IDENTITY }}
       NOTARY_PROFILE_NAME: ${{ vars.NOTARY_PROFILE_NAME }}
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
@@ -70,6 +76,7 @@ jobs:
         run: npm ci
 
       - name: Import signing certificate
+        if: ${{ inputs.sign_artifacts }}
         env:
           APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -89,6 +96,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$KEYCHAIN"
 
       - name: Configure notarytool credentials
+        if: ${{ inputs.sign_artifacts }}
         env:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
@@ -103,6 +111,7 @@ jobs:
             --key "private_keys/AuthKey.p8"
 
       - name: Write Tauri signing key
+        if: ${{ inputs.sign_artifacts }}
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.tauri"
@@ -111,9 +120,13 @@ jobs:
       - name: Build app bundle
         run: |
           set -euo pipefail
-          export TAURI_SIGNING_PRIVATE_KEY
-          TAURI_SIGNING_PRIVATE_KEY="$(cat "$HOME/.tauri/codexmonitor.key")"
-          npm run tauri -- build --bundles app
+          if [ "$SIGN_ARTIFACTS" = "true" ]; then
+            export TAURI_SIGNING_PRIVATE_KEY
+            TAURI_SIGNING_PRIVATE_KEY="$(cat "$HOME/.tauri/codexmonitor.key")"
+            npm run tauri -- build --bundles app
+          else
+            npm run tauri -- build --bundles app --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          fi
 
       - name: Build daemon binaries
         run: |
@@ -122,12 +135,20 @@ jobs:
           cargo build --release --bin codex_monitor_daemon --bin codex_monitor_daemonctl
 
       - name: Bundle OpenSSL and re-sign
+        if: ${{ inputs.sign_artifacts }}
         run: |
           set -euo pipefail
           CODESIGN_IDENTITY="$CODESIGN_IDENTITY" \
             scripts/macos-fix-openssl.sh
 
+      - name: Bundle OpenSSL
+        if: ${{ !inputs.sign_artifacts }}
+        run: |
+          set -euo pipefail
+          SKIP_CODESIGN=1 scripts/macos-fix-openssl.sh
+
       - name: Notarize and staple
+        if: ${{ inputs.sign_artifacts }}
         run: |
           set -euo pipefail
           ditto -c -k --keepParent \
@@ -173,15 +194,19 @@ jobs:
             "src-tauri/target/release/bundle/macos/${TAR_NAME}" \
             -C src-tauri/target/release/bundle/macos "Codex Monitor.app"
 
-          npm run tauri signer sign -- \
-            -f "$HOME/.tauri/codexmonitor.key" \
-            -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \
-            "src-tauri/target/release/bundle/macos/${TAR_NAME}"
+          if [ "$SIGN_ARTIFACTS" = "true" ]; then
+            npm run tauri signer sign -- \
+              -f "$HOME/.tauri/codexmonitor.key" \
+              -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \
+              "src-tauri/target/release/bundle/macos/${TAR_NAME}"
+          fi
 
           cp "src-tauri/target/release/bundle/macos/${TAR_NAME}" \
             "release-artifacts/${TAR_NAME}"
-          cp "src-tauri/target/release/bundle/macos/${TAR_NAME}.sig" \
-            "release-artifacts/${TAR_NAME}.sig"
+          if [ -f "src-tauri/target/release/bundle/macos/${TAR_NAME}.sig" ]; then
+            cp "src-tauri/target/release/bundle/macos/${TAR_NAME}.sig" \
+              "release-artifacts/${TAR_NAME}.sig"
+          fi
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -201,6 +226,7 @@ jobs:
     env:
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       TAURI_SIGNING_PRIVATE_KEY_B64: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_B64 }}
+      SIGN_ARTIFACTS: ${{ inputs.sign_artifacts }}
     strategy:
       fail-fast: false
       matrix:
@@ -304,6 +330,7 @@ jobs:
         run: npm ci
 
       - name: Write Tauri signing key
+        if: ${{ inputs.sign_artifacts }}
         shell: bash
         run: |
           set -euo pipefail
@@ -323,9 +350,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export TAURI_SIGNING_PRIVATE_KEY
-          TAURI_SIGNING_PRIVATE_KEY="$(cat "$HOME/.tauri/codexmonitor.key")"
-          npm run tauri:build:win
+          if [ "$SIGN_ARTIFACTS" = "true" ]; then
+            export TAURI_SIGNING_PRIVATE_KEY
+            TAURI_SIGNING_PRIVATE_KEY="$(cat "$HOME/.tauri/codexmonitor.key")"
+            npm run tauri:build:win
+          else
+            npm run doctor:win
+            npm run tauri -- build --config src-tauri/tauri.windows.conf.json --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          fi
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
