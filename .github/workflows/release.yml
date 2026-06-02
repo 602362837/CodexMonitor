@@ -17,6 +17,16 @@ on:
         required: true
         type: boolean
         default: true
+      build_macos:
+        description: "Build macOS artifacts."
+        required: true
+        type: boolean
+        default: true
+      build_windows:
+        description: "Build Windows artifacts."
+        required: true
+        type: boolean
+        default: true
       sign_artifacts:
         description: "Use Apple notarization and Tauri updater signing secrets. Disable for supplemental unsigned assets."
         required: true
@@ -29,6 +39,7 @@ permissions:
 
 jobs:
   build_macos:
+    if: ${{ inputs.build_macos }}
     name: macOS bundle (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     environment: release
@@ -296,6 +307,7 @@ jobs:
             src-tauri/target/release/bundle/rpm/*.rpm
 
   build_windows:
+    if: ${{ inputs.build_windows }}
     runs-on: windows-latest
     environment: release
     env:
@@ -387,6 +399,8 @@ jobs:
           NEEDS_CONTEXT: ${{ toJson(needs) }}
           UPLOAD_EXISTING: ${{ inputs.upload_existing }}
           INCLUDE_LINUX: ${{ inputs.include_linux }}
+          BUILD_MACOS: ${{ inputs.build_macos }}
+          BUILD_WINDOWS: ${{ inputs.build_windows }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -398,6 +412,10 @@ jobs:
           include_linux = os.environ["INCLUDE_LINUX"] == "true"
 
           required = ["build_macos", "build_windows"]
+          if os.environ["BUILD_MACOS"] != "true":
+              required.remove("build_macos")
+          if os.environ["BUILD_WINDOWS"] != "true":
+              required.remove("build_windows")
           if include_linux and not upload_existing:
               required.append("build_linux")
 
@@ -433,6 +451,7 @@ jobs:
           echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
 
       - name: Download macOS artifacts
+        if: ${{ inputs.build_macos }}
         uses: actions/download-artifact@v4
         with:
           pattern: macos-artifacts-*
@@ -448,6 +467,7 @@ jobs:
           merge-multiple: true
 
       - name: Download Windows artifacts
+        if: ${{ inputs.build_windows }}
         uses: actions/download-artifact@v4
         with:
           name: windows-artifacts
