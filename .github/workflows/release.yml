@@ -301,6 +301,7 @@ jobs:
     env:
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       TAURI_SIGNING_PRIVATE_KEY_B64: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_B64 }}
+      SIGN_ARTIFACTS: ${{ inputs.sign_artifacts }}
     steps:
       - uses: actions/checkout@v4
 
