@@ -12,7 +12,7 @@ describe("threadReducer", () => {
     });
     const threads = next.threadsByWorkspace["ws-1"] ?? [];
     expect(threads).toHaveLength(1);
-    expect(threads[0].name).toBe("New Agent");
+    expect(threads[0].name).toBe("新 Agent");
     expect(next.activeThreadIdByWorkspace["ws-1"]).toBe("thread-1");
     expect(next.threadStatusById["thread-1"]?.isProcessing).toBe(false);
   });
@@ -272,6 +272,83 @@ describe("threadReducer", () => {
     expect(removed.userInputRequests).toHaveLength(0);
   });
 
+  it("clears request user input queue for a specific thread", () => {
+    const base = {
+      ...initialState,
+      userInputRequests: [
+        {
+          workspace_id: "ws-1",
+          request_id: 1,
+          params: {
+            thread_id: "thread-1",
+            turn_id: "turn-1",
+            item_id: "call-1",
+            questions: [],
+          },
+        },
+        {
+          workspace_id: "ws-1",
+          request_id: 2,
+          params: {
+            thread_id: "thread-2",
+            turn_id: "turn-2",
+            item_id: "call-2",
+            questions: [],
+          },
+        },
+        {
+          workspace_id: "ws-2",
+          request_id: 3,
+          params: {
+            thread_id: "thread-1",
+            turn_id: "turn-3",
+            item_id: "call-3",
+            questions: [],
+          },
+        },
+      ],
+    };
+
+    const next = threadReducer(base, {
+      type: "clearUserInputRequestsForThread",
+      workspaceId: "ws-1",
+      threadId: "thread-1",
+    });
+
+    expect(next.userInputRequests).toEqual([
+      base.userInputRequests[1],
+      base.userInputRequests[2],
+    ]);
+  });
+
+  it("clears processing state without writing a duration", () => {
+    const base = {
+      ...initialState,
+      threadStatusById: {
+        "thread-1": {
+          isProcessing: true,
+          hasUnread: false,
+          isReviewing: false,
+          processingStartedAt: 1000,
+          lastDurationMs: 250,
+        },
+      },
+    };
+
+    const next = threadReducer(base, {
+      type: "clearProcessingWithoutDuration",
+      threadId: "thread-1",
+    });
+
+    expect(next.threadStatusById["thread-1"]).toEqual({
+      isProcessing: false,
+      hasUnread: false,
+      isReviewing: false,
+      processingStartedAt: null,
+      lastDurationMs: null,
+    });
+  });
+
   it("drops local review-start items when server review starts", () => {
     const localReview: ConversationItem = {
       id: "review-start-1",
@@ -403,7 +480,7 @@ describe("threadReducer", () => {
       id: "plan-1",
       kind: "tool",
       toolType: "plan",
-      title: "Plan",
+      title: "计划",
       output: "- Step 1",
     });
   });

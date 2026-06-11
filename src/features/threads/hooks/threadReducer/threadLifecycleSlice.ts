@@ -214,6 +214,26 @@ export function reduceThreadLifecycle(
         },
       };
     }
+    case "clearProcessingWithoutDuration": {
+      const previous = state.threadStatusById[action.threadId];
+      const nextStatus: ThreadStatus = {
+        isProcessing: false,
+        hasUnread: previous?.hasUnread ?? false,
+        isReviewing: previous?.isReviewing ?? false,
+        processingStartedAt: null,
+        lastDurationMs: null,
+      };
+      if (previous && statusEquals(previous, nextStatus)) {
+        return state;
+      }
+      return {
+        ...state,
+        threadStatusById: {
+          ...state.threadStatusById,
+          [action.threadId]: nextStatus,
+        },
+      };
+    }
     case "setActiveTurnId":
       return {
         ...state,

@@ -521,6 +521,7 @@ describe("useThreadTurnEvents", () => {
   it("clears processing, active turn, and pending interrupt for non-active thread status", () => {
     const {
       result,
+      dispatch,
       markProcessing,
       setActiveTurnId,
       setThreadLoaded,
@@ -538,6 +539,11 @@ describe("useThreadTurnEvents", () => {
     expect(setActiveTurnId).toHaveBeenCalledWith("thread-1", null);
     expect(setThreadLoaded).not.toHaveBeenCalled();
     expect(pendingInterruptsRef.current.has("thread-1")).toBe(false);
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "clearUserInputRequestsForThread",
+      workspaceId: "ws-1",
+      threadId: "thread-1",
+    });
   });
 
   it("marks thread as unloaded when status changes to notLoaded", () => {
@@ -554,6 +560,7 @@ describe("useThreadTurnEvents", () => {
   it("clears runtime state and marks unloaded on thread closed", () => {
     const {
       result,
+      dispatch,
       markProcessing,
       markReviewing,
       setThreadLoaded,
@@ -570,6 +577,11 @@ describe("useThreadTurnEvents", () => {
     expect(markReviewing).toHaveBeenCalledWith("thread-1", false);
     expect(setActiveTurnId).toHaveBeenCalledWith("thread-1", null);
     expect(pendingInterruptsRef.current.has("thread-1")).toBe(false);
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "clearUserInputRequestsForThread",
+      workspaceId: "ws-1",
+      threadId: "thread-1",
+    });
   });
 
   it("clears the active plan when all plan steps are completed", () => {
@@ -589,6 +601,11 @@ describe("useThreadTurnEvents", () => {
 
     expect(dispatch).toHaveBeenCalledWith({
       type: "clearThreadPlan",
+      threadId: "thread-1",
+    });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "clearUserInputRequestsForThread",
+      workspaceId: "ws-1",
       threadId: "thread-1",
     });
   });

@@ -261,12 +261,17 @@ export function useThreadTurnEvents({
   );
 
   const onTurnCompleted = useCallback(
-    (_workspaceId: string, threadId: string, turnId: string) => {
+    (workspaceId: string, threadId: string, turnId: string) => {
       const activeTurnId = getLatestKnownActiveTurnId(threadId);
       if (turnId && activeTurnId && turnId !== activeTurnId) {
         return;
       }
       markProcessing(threadId, false);
+      dispatch({
+        type: "clearUserInputRequestsForThread",
+        workspaceId,
+        threadId,
+      });
       resetThreadTurnState(
         {
           hasOptimisticActiveTurnByThreadRef,
@@ -291,7 +296,7 @@ export function useThreadTurnEvents({
   );
 
   const onThreadStatusChanged = useCallback(
-    (_workspaceId: string, threadId: string, status: Record<string, unknown>) => {
+    (workspaceId: string, threadId: string, status: Record<string, unknown>) => {
       const statusType = normalizeThreadStatusType(status);
       if (!statusType) {
         return;
@@ -306,6 +311,11 @@ export function useThreadTurnEvents({
         statusType === "systemerror"
       ) {
         markProcessing(threadId, false);
+        dispatch({
+          type: "clearUserInputRequestsForThread",
+          workspaceId,
+          threadId,
+        });
         if (statusType === "notloaded") {
           setThreadLoaded(threadId, false);
           markReviewing(threadId, false);
@@ -331,10 +341,15 @@ export function useThreadTurnEvents({
   );
 
   const onThreadClosed = useCallback(
-    (_workspaceId: string, threadId: string) => {
+    (workspaceId: string, threadId: string) => {
       setThreadLoaded(threadId, false);
       markProcessing(threadId, false);
       markReviewing(threadId, false);
+      dispatch({
+        type: "clearUserInputRequestsForThread",
+        workspaceId,
+        threadId,
+      });
       resetThreadTurnState(
         {
           hasOptimisticActiveTurnByThreadRef,
@@ -346,6 +361,7 @@ export function useThreadTurnEvents({
       setActiveTurnId(threadId, null);
     },
     [
+      dispatch,
       markProcessing,
       markReviewing,
       pendingInterruptsRef,
@@ -425,6 +441,11 @@ export function useThreadTurnEvents({
       dispatch({ type: "ensureThread", workspaceId, threadId });
       markProcessing(threadId, false);
       markReviewing(threadId, false);
+      dispatch({
+        type: "clearUserInputRequestsForThread",
+        workspaceId,
+        threadId,
+      });
       resetThreadTurnState(
         {
           hasOptimisticActiveTurnByThreadRef,

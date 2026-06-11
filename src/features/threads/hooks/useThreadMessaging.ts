@@ -434,8 +434,17 @@ export function useThreadMessaging({
     }
     const activeTurnId = activeTurnIdByThread[activeThreadId] ?? null;
     const turnId = activeTurnId ?? "pending";
-    markProcessing(activeThreadId, false);
+    dispatch({
+      type: "clearProcessingWithoutDuration",
+      threadId: activeThreadId,
+    });
     setActiveTurnId(activeThreadId, null);
+    dispatch({
+      type: "clearUserInputRequestsForThread",
+      workspaceId: activeWorkspace.id,
+      threadId: activeThreadId,
+    });
+    dispatch({ type: "clearThreadPlan", threadId: activeThreadId });
     dispatch({
       type: "addAssistantMessage",
       threadId: activeThreadId,
@@ -483,7 +492,6 @@ export function useThreadMessaging({
     activeTurnIdByThread,
     activeWorkspace,
     dispatch,
-    markProcessing,
     onDebug,
     pendingInterruptsRef,
     setActiveTurnId,

@@ -941,6 +941,50 @@ describe("useThreads UX integration", () => {
     expect(interruptMock).not.toHaveBeenCalledWith("ws-1", "thread-1", "pending");
   });
 
+  it("clears pending user input and active plan when interrupted", async () => {
+    const interruptMock = vi.mocked(interruptTurn);
+    interruptMock.mockResolvedValue({ result: {} });
+
+    const { result } = renderHook(() =>
+      useThreads({
+        activeWorkspace: workspace,
+        onWorkspaceConnected: vi.fn(),
+      }),
+    );
+
+    act(() => {
+      result.current.setActiveThreadId("thread-1");
+      handlers?.onTurnStarted?.("ws-1", "thread-1", "turn-1");
+      handlers?.onRequestUserInput?.({
+        workspace_id: "ws-1",
+        request_id: "request-1",
+        params: {
+          thread_id: "thread-1",
+          turn_id: "turn-1",
+          item_id: "item-1",
+          questions: [],
+        },
+      });
+      handlers?.onTurnPlanUpdated?.("ws-1", "thread-1", "turn-1", {
+        explanation: "Need approval",
+        plan: [{ step: "Step 1", status: "pending" }],
+      });
+    });
+
+    expect(result.current.userInputRequests).toHaveLength(1);
+    expect(result.current.planByThread["thread-1"]).not.toBeNull();
+
+    await act(async () => {
+      await result.current.interruptTurn();
+    });
+
+    await waitFor(() => {
+      expect(result.current.userInputRequests).toHaveLength(0);
+      expect(result.current.planByThread["thread-1"]).toBeNull();
+    });
+    expect(interruptMock).toHaveBeenCalledWith("ws-1", "thread-1", "turn-1");
+  });
+
   it("uses turn steer after request user input when the turn is still active", async () => {
     vi.mocked(steerTurn).mockResolvedValue({
       result: { turnId: "turn-1" },

@@ -45,6 +45,15 @@ export function reduceThreadQueue(state: ThreadState, action: ThreadAction): Thr
             item.workspace_id !== action.workspaceId,
         ),
       };
+    case "clearUserInputRequestsForThread":
+      return {
+        ...state,
+        userInputRequests: state.userInputRequests.filter(
+          (item) =>
+            item.workspace_id !== action.workspaceId ||
+            item.params.thread_id !== action.threadId,
+        ),
+      };
     default:
       return state;
   }

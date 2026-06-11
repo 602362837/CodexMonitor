@@ -155,6 +155,11 @@ export type ThreadAction =
       requestId: number | string;
       workspaceId: string;
     }
+  | {
+      type: "clearUserInputRequestsForThread";
+      workspaceId: string;
+      threadId: string;
+    }
   | { type: "setThreadTokenUsage"; threadId: string; tokenUsage: ThreadTokenUsage }
   | {
       type: "setRateLimits";
@@ -175,7 +180,8 @@ export type ThreadAction =
       threadId: string;
       text: string;
       timestamp: number;
-    };
+    }
+  | { type: "clearProcessingWithoutDuration"; threadId: string };
 
 const emptyItems: Record<string, ConversationItem[]> = {};
 
