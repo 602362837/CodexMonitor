@@ -68,6 +68,9 @@ type ComposerProps = {
   selectedModelId: string | null;
   onSelectModel: (id: string) => void;
   onRefreshModels?: () => Promise<void> | void;
+  modelSuffixOptions: string[];
+  selectedModelSuffix: string | null;
+  onSelectModelSuffix: (suffix: string | null) => void;
   reasoningOptions: string[];
   selectedEffort: string | null;
   onSelectEffort: (effort: string) => void;
@@ -178,6 +181,9 @@ export const Composer = memo(function Composer({
   selectedModelId,
   onSelectModel,
   onRefreshModels,
+  modelSuffixOptions,
+  selectedModelSuffix,
+  onSelectModelSuffix,
   reasoningOptions,
   selectedEffort,
   onSelectEffort,
@@ -685,6 +691,9 @@ export const Composer = memo(function Composer({
         selectedModelId={selectedModelId}
         onSelectModel={onSelectModel}
         onRefreshModels={onRefreshModels}
+        modelSuffixOptions={modelSuffixOptions}
+        selectedModelSuffix={selectedModelSuffix}
+        onSelectModelSuffix={onSelectModelSuffix}
         reasoningOptions={reasoningOptions}
         selectedEffort={selectedEffort}
         onSelectEffort={onSelectEffort}

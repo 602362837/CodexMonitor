@@ -24,6 +24,9 @@ type WorkspaceHomeRunControlsProps = {
   models: ModelOption[];
   selectedModelId: string | null;
   onSelectModel: (modelId: string) => void;
+  modelSuffixOptions: string[];
+  selectedModelSuffix: string | null;
+  onSelectModelSuffix: (suffix: string | null) => void;
   modelSelections: Record<string, number>;
   onToggleModel: (modelId: string) => void;
   onModelCountChange: (modelId: string, count: number) => void;
@@ -44,6 +47,9 @@ export function WorkspaceHomeRunControls({
   models,
   selectedModelId,
   onSelectModel,
+  modelSuffixOptions,
+  selectedModelSuffix,
+  onSelectModelSuffix,
   modelSelections,
   onToggleModel,
   onModelCountChange,
@@ -258,6 +264,27 @@ export function WorkspaceHomeRunControls({
           </div>
         </div>
       )}
+      <div className="composer-select-wrap workspace-home-control">
+        <div className="open-app-button">
+          <span className="composer-icon" aria-hidden>
+            <Cpu size={14} strokeWidth={1.8} />
+          </span>
+          <select
+            className="composer-select composer-select--approval"
+            aria-label="模型后缀"
+            value={selectedModelSuffix ?? ""}
+            onChange={(event) => onSelectModelSuffix(event.target.value || null)}
+            disabled={isSubmitting}
+          >
+            <option value="">无后缀</option>
+            {modelSuffixOptions.map((suffix) => (
+              <option key={suffix} value={suffix}>
+                {suffix}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="composer-select-wrap workspace-home-control">
         <div className="open-app-button">
           <span className="composer-icon" aria-hidden>

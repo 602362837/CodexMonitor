@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Stethoscope from "lucide-react/dist/esm/icons/stethoscope";
 import type { Dispatch, SetStateAction } from "react";
 import type {
@@ -12,6 +12,7 @@ import {
   SettingsToggleRow,
 } from "@/features/design-system/components/settings/SettingsPrimitives";
 import { FileEditorCard } from "@/features/shared/components/FileEditorCard";
+import { normalizeModelSuffixOptions } from "@/utils/modelSuffix";
 
 type SettingsCodexSectionProps = {
   appSettings: AppSettings;
@@ -146,6 +147,7 @@ export function SettingsCodexSection({
   onRefreshGlobalConfig,
   onSaveGlobalConfig,
 }: SettingsCodexSectionProps) {
+  const [modelSuffixDraft, setModelSuffixDraft] = useState("");
   const latestModelSlug = defaultModels[0]?.model ?? null;
   const savedModelSlug = useMemo(
     () => coerceSavedModelSlug(appSettings.lastComposerModelId, defaultModels),
@@ -184,6 +186,41 @@ export function SettingsCodexSection({
     }
     return reasoningOptions[0] ?? "";
   }, [reasoningOptions, reasoningSupported, savedEffort, selectedModel]);
+  const modelSuffixOptions = useMemo(
+    () => normalizeModelSuffixOptions(appSettings.modelSuffixOptions),
+    [appSettings.modelSuffixOptions],
+  );
+  const selectedModelSuffix = appSettings.selectedModelSuffix ?? "";
+
+  useEffect(() => {
+    setModelSuffixDraft("");
+  }, [appSettings.modelSuffixOptions]);
+
+  const handleAddModelSuffix = () => {
+    const normalized = normalizeModelSuffixOptions([
+      ...modelSuffixOptions,
+      modelSuffixDraft,
+    ]);
+    if (normalized.length === modelSuffixOptions.length) {
+      setModelSuffixDraft("");
+      return;
+    }
+    void onUpdateAppSettings({
+      ...appSettings,
+      modelSuffixOptions: normalized,
+    });
+    setModelSuffixDraft("");
+  };
+
+  const handleRemoveModelSuffix = (suffix: string) => {
+    const nextOptions = modelSuffixOptions.filter((option) => option !== suffix);
+    void onUpdateAppSettings({
+      ...appSettings,
+      modelSuffixOptions: nextOptions,
+      selectedModelSuffix:
+        appSettings.selectedModelSuffix === suffix ? null : appSettings.selectedModelSuffix,
+    });
+  };
 
   const didNormalizeDefaultsRef = useRef(false);
   useEffect(() => {
@@ -444,6 +481,72 @@ export function SettingsCodexSection({
           >
             刷新
           </button>
+        </div>
+      </SettingsToggleRow>
+
+      <SettingsToggleRow
+        title={
+          <label htmlFor="default-model-suffix">
+            模型后缀
+          </label>
+        }
+        subtitle="默认不追加。选择后发送时会把后缀拼到模型名后面。"
+      >
+        <div className="settings-field">
+          <div className="settings-field-row">
+            <select
+              id="default-model-suffix"
+              className="settings-select"
+              value={selectedModelSuffix}
+              onChange={(event) =>
+                void onUpdateAppSettings({
+                  ...appSettings,
+                  selectedModelSuffix: event.target.value || null,
+                })
+              }
+              aria-label="模型后缀"
+            >
+              <option value="">无后缀</option>
+              {modelSuffixOptions.map((suffix) => (
+                <option key={suffix} value={suffix}>
+                  {suffix}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="settings-field-row">
+            <input
+              className="settings-input"
+              value={modelSuffixDraft}
+              placeholder="例如 -codex"
+              aria-label="新增模型后缀"
+              onChange={(event) => setModelSuffixDraft(event.target.value)}
+            />
+            <button
+              type="button"
+              className="ghost"
+              onClick={handleAddModelSuffix}
+              disabled={modelSuffixDraft.trim().length === 0}
+            >
+              添加
+            </button>
+          </div>
+          <div className="settings-help">后缀值会原样追加，系统不会自动补分隔符。</div>
+          {modelSuffixOptions.length > 0 && (
+            <div className="settings-field-row" aria-label="模型后缀列表">
+              {modelSuffixOptions.map((suffix) => (
+                <button
+                  key={suffix}
+                  type="button"
+                  className="ghost settings-button-compact"
+                  onClick={() => handleRemoveModelSuffix(suffix)}
+                  aria-label={`删除后缀 ${suffix}`}
+                >
+                  {suffix} x
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </SettingsToggleRow>
 

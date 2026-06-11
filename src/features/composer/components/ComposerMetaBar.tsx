@@ -1,5 +1,5 @@
 import { type CSSProperties, useState } from "react";
-import { BrainCog, SlidersHorizontal, Zap } from "lucide-react";
+import { BrainCog, Cpu, SlidersHorizontal, Zap } from "lucide-react";
 import type {
   AccessMode,
   ModelOption,
@@ -18,6 +18,9 @@ type ComposerMetaBarProps = {
   selectedModelId: string | null;
   onSelectModel: (id: string) => void;
   onRefreshModels?: () => Promise<void> | void;
+  modelSuffixOptions: string[];
+  selectedModelSuffix: string | null;
+  onSelectModelSuffix: (suffix: string | null) => void;
   reasoningOptions: string[];
   selectedEffort: string | null;
   onSelectEffort: (effort: string) => void;
@@ -40,6 +43,9 @@ export function ComposerMetaBar({
   selectedModelId,
   onSelectModel,
   onRefreshModels,
+  modelSuffixOptions,
+  selectedModelSuffix,
+  onSelectModelSuffix,
   reasoningOptions,
   selectedEffort,
   onSelectEffort,
@@ -197,6 +203,25 @@ export function ComposerMetaBar({
               <Zap size={12} strokeWidth={1.8} />
             </span>
           )}
+        </div>
+        <div className="composer-select-wrap">
+          <span className="composer-icon" aria-hidden>
+            <Cpu size={14} strokeWidth={1.8} />
+          </span>
+          <select
+            className="composer-select composer-select--approval"
+            aria-label="模型后缀"
+            value={selectedModelSuffix ?? ""}
+            onChange={(event) => onSelectModelSuffix(event.target.value || null)}
+            disabled={disabled}
+          >
+            <option value="">无后缀</option>
+            {modelSuffixOptions.map((suffix) => (
+              <option key={suffix} value={suffix}>
+                {suffix}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="composer-select-wrap composer-select-wrap--effort">
           <span className="composer-icon composer-icon--effort" aria-hidden>

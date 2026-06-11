@@ -51,6 +51,9 @@ type WorkspaceHomeProps = {
   models: ModelOption[];
   selectedModelId: string | null;
   onSelectModel: (modelId: string) => void;
+  modelSuffixOptions: string[];
+  selectedModelSuffix: string | null;
+  onSelectModelSuffix: (suffix: string | null) => void;
   modelSelections: Record<string, number>;
   onToggleModel: (modelId: string) => void;
   onModelCountChange: (modelId: string, count: number) => void;
@@ -114,6 +117,9 @@ export function WorkspaceHome({
   models,
   selectedModelId,
   onSelectModel,
+  modelSuffixOptions,
+  selectedModelSuffix,
+  onSelectModelSuffix,
   modelSelections,
   onToggleModel,
   onModelCountChange,
@@ -424,6 +430,9 @@ export function WorkspaceHome({
         models={models}
         selectedModelId={selectedModelId}
         onSelectModel={onSelectModel}
+        modelSuffixOptions={modelSuffixOptions}
+        selectedModelSuffix={selectedModelSuffix}
+        onSelectModelSuffix={onSelectModelSuffix}
         modelSelections={modelSelections}
         onToggleModel={onToggleModel}
         onModelCountChange={onModelCountChange}

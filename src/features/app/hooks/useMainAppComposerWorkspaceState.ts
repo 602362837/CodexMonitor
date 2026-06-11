@@ -58,6 +58,7 @@ type UseMainAppComposerWorkspaceStateArgs = {
   models: {
     models: ModelOption[];
     selectedModelId: string | null;
+    selectedModelSuffix: string | null;
     resolvedEffort: string | null;
     selectedServiceTier: ServiceTier | null | undefined;
     collaborationModePayload: Record<string, unknown> | null;
@@ -126,6 +127,7 @@ export function useMainAppComposerWorkspaceState({
   const {
     models: modelOptions,
     selectedModelId,
+    selectedModelSuffix,
     resolvedEffort,
     selectedServiceTier,
     collaborationModePayload,
@@ -251,6 +253,7 @@ export function useMainAppComposerWorkspaceState({
     activeWorkspace,
     models: modelOptions,
     selectedModelId,
+    selectedModelSuffix,
     effort: resolvedEffort,
     serviceTier: selectedServiceTier,
     collaborationMode: collaborationModePayload,

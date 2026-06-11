@@ -41,6 +41,12 @@ const models: ModelOption[] = [
 function renderMetaBar(overrides: Partial<ComponentProps<typeof ComposerMetaBar>> = {}) {
   const onSelectModel = vi.fn();
   const onRefreshModels = vi.fn().mockResolvedValue(undefined);
+  const {
+    modelSuffixOptions = [],
+    selectedModelSuffix = null,
+    onSelectModelSuffix = () => {},
+    ...rest
+  } = overrides;
 
   render(
     <ComposerMetaBar
@@ -52,6 +58,9 @@ function renderMetaBar(overrides: Partial<ComponentProps<typeof ComposerMetaBar>
       selectedModelId="zeta"
       onSelectModel={onSelectModel}
       onRefreshModels={onRefreshModels}
+      modelSuffixOptions={modelSuffixOptions}
+      selectedModelSuffix={selectedModelSuffix}
+      onSelectModelSuffix={onSelectModelSuffix}
       reasoningOptions={[]}
       selectedEffort={null}
       onSelectEffort={() => {}}
@@ -59,7 +68,7 @@ function renderMetaBar(overrides: Partial<ComponentProps<typeof ComposerMetaBar>
       reasoningSupported={false}
       accessMode="current"
       onSelectAccessMode={() => {}}
-      {...overrides}
+      {...rest}
     />,
   );
 

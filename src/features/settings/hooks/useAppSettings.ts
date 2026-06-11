@@ -19,6 +19,10 @@ import { normalizeOpenAppTargets } from "@app/utils/openApp";
 import { getDefaultInterruptShortcut, isMacPlatform } from "@utils/shortcuts";
 import { isMobilePlatform } from "@utils/platformPaths";
 import { DEFAULT_COMMIT_MESSAGE_PROMPT } from "@utils/commitMessagePrompt";
+import {
+  normalizeModelSuffixOptions,
+  normalizeSelectedModelSuffix,
+} from "@utils/modelSuffix";
 
 const allowedThemes = new Set(["system", "light", "dark", "dim"]);
 const allowedPersonality = new Set(["friendly", "pragmatic"]);
@@ -165,6 +169,8 @@ function buildDefaultSettings(): AppSettings {
     cycleWorkspacePrevShortcut: isMac ? "cmd+shift+up" : "ctrl+alt+shift+up",
     lastComposerModelId: null,
     lastComposerReasoningEffort: null,
+    modelSuffixOptions: [],
+    selectedModelSuffix: null,
     uiScale: UI_SCALE_DEFAULT,
     theme: "system",
     usageShowRemaining: false,
@@ -240,6 +246,11 @@ function normalizeAppSettings(settings: AppSettings): AppSettings {
   const chatHistoryScrollbackItems = normalizeChatHistoryScrollbackItems(
     settings.chatHistoryScrollbackItems,
   );
+  const modelSuffixOptions = normalizeModelSuffixOptions(settings.modelSuffixOptions);
+  const selectedModelSuffix = normalizeSelectedModelSuffix(
+    settings.selectedModelSuffix,
+    modelSuffixOptions,
+  );
   return {
     ...settings,
     ...remoteBackendSettings,
@@ -274,6 +285,8 @@ function normalizeAppSettings(settings: AppSettings): AppSettings {
       settings.reviewDeliveryMode === "detached" ? "detached" : "inline",
     chatHistoryScrollbackItems,
     commitMessagePrompt,
+    modelSuffixOptions,
+    selectedModelSuffix,
     openAppTargets: normalizedTargets,
     selectedOpenAppId,
   };

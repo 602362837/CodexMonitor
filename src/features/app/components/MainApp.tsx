@@ -38,6 +38,7 @@ import { useTerminalController } from "@/features/terminal/hooks/useTerminalCont
 import { useWorkspaceLaunchScript } from "@app/hooks/useWorkspaceLaunchScript";
 import { useWorkspaceLaunchScripts } from "@app/hooks/useWorkspaceLaunchScripts";
 import { useWorktreeSetupScript } from "@app/hooks/useWorktreeSetupScript";
+import { appendModelSuffix } from "@/utils/modelSuffix";
 import { effectiveCommitMessageModelId } from "@/features/git/utils/commitMessageModelSelection";
 import { useMobileServerSetup } from "@/features/mobile/hooks/useMobileServerSetup";
 import { useMainAppModals } from "@app/hooks/useMainAppModals";
@@ -404,7 +405,10 @@ export default function MainApp() {
     getWorkspacePromptsDir,
     getGlobalPromptsDir,
   } = useCustomPrompts({ activeWorkspace, onDebug: addDebugEntry });
-  const resolvedModel = selectedModel?.model ?? null;
+  const resolvedModel = appendModelSuffix(
+    selectedModel?.model ?? null,
+    appSettings.selectedModelSuffix,
+  );
   const resolvedEffort = reasoningSupported ? selectedEffort : null;
 
   const {
@@ -1157,6 +1161,7 @@ export default function MainApp() {
     models: {
       models,
       selectedModelId,
+      selectedModelSuffix: appSettings.selectedModelSuffix,
       resolvedEffort,
       selectedServiceTier,
       collaborationModePayload,
@@ -1552,6 +1557,18 @@ export default function MainApp() {
           models,
           selectedModelId,
           onSelectModel: setSelectedModelId,
+          modelSuffixOptions: appSettings.modelSuffixOptions,
+          selectedModelSuffix: appSettings.selectedModelSuffix,
+          onSelectModelSuffix: (suffix: string | null) => {
+            setAppSettings((current) => {
+              if (current.selectedModelSuffix === suffix) {
+                return current;
+              }
+              const next = { ...current, selectedModelSuffix: suffix };
+              void queueSaveSettings(next);
+              return next;
+            });
+          },
           modelSelections: workspaceModelSelections,
           onToggleModel: toggleWorkspaceModelSelection,
           onModelCountChange: setWorkspaceModelCount,
@@ -1736,6 +1753,18 @@ export default function MainApp() {
     selectedModelId,
     onSelectModel: handleSelectModel,
     onRefreshModels: refreshModels,
+    modelSuffixOptions: appSettings.modelSuffixOptions,
+    selectedModelSuffix: appSettings.selectedModelSuffix,
+    onSelectModelSuffix: (suffix: string | null) => {
+      setAppSettings((current) => {
+        if (current.selectedModelSuffix === suffix) {
+          return current;
+        }
+        const next = { ...current, selectedModelSuffix: suffix };
+        void queueSaveSettings(next);
+        return next;
+      });
+    },
     collaborationModes,
     selectedCollaborationModeId,
     onSelectCollaborationMode: handleSelectCollaborationMode,

@@ -70,6 +70,9 @@ function ComposerHarness({
       models={[]}
       selectedModelId={null}
       onSelectModel={() => {}}
+      modelSuffixOptions={[]}
+      selectedModelSuffix={null}
+      onSelectModelSuffix={() => {}}
       reasoningOptions={[]}
       selectedEffort={null}
       onSelectEffort={() => {}}
@@ -114,7 +117,7 @@ describe("Composer send triggers", () => {
 
     const textarea = screen.getByRole("textbox");
     fireEvent.change(textarea, { target: { value: "from button" } });
-    fireEvent.click(screen.getByLabelText("Send"));
+    fireEvent.click(screen.getByLabelText("发送"));
 
     expect(onSend).toHaveBeenCalledTimes(1);
     expect(onSend).toHaveBeenCalledWith("from button", [], undefined, "default");
@@ -124,7 +127,7 @@ describe("Composer send triggers", () => {
     const onSend = vi.fn();
     render(<ComposerHarness onSend={onSend} selectedServiceTier="fast" />);
 
-    expect(screen.getByLabelText("Fast mode enabled")).toBeTruthy();
+    expect(screen.getByLabelText("Fast 模式已启用")).toBeTruthy();
   });
 
   it("blurs the textarea after Enter send on mobile", () => {
@@ -232,7 +235,7 @@ describe("Composer send triggers", () => {
 
     expect(
       screen.getByText(
-        "Default: Queue (Steer unavailable). Both Enter and Shift+Ctrl+Enter will queue this message.",
+        "默认：排队（Steer 不可用）。Enter 和 Shift+Ctrl+Enter 都会把这条消息加入队列。",
       ),
     ).toBeTruthy();
     expect(onSend).toHaveBeenCalledTimes(1);

@@ -6,6 +6,7 @@ import type {
   WorkspaceInfo,
 } from "../../../types";
 import { generateRunMetadata } from "../../../services/tauri";
+import { appendModelSuffix } from "../../../utils/modelSuffix";
 
 export type WorkspaceRunMode = "local" | "worktree";
 
@@ -35,6 +36,7 @@ type UseWorkspaceHomeOptions = {
   activeWorkspace: WorkspaceInfo | null;
   models: ModelOption[];
   selectedModelId: string | null;
+  selectedModelSuffix?: string | null;
   effort?: string | null;
   serviceTier?: ServiceTier | null | undefined;
   collaborationMode?: Record<string, unknown> | null;
@@ -188,6 +190,7 @@ export function useWorkspaceHome({
   activeWorkspace,
   models,
   selectedModelId,
+  selectedModelSuffix = null,
   effort = null,
   serviceTier = undefined,
   collaborationMode = null,
@@ -496,7 +499,10 @@ export function useWorkspaceHome({
             serviceTier,
           });
           const localModel = selectedModelId
-            ? modelLookup.get(selectedModelId)?.model ?? null
+            ? appendModelSuffix(
+              modelLookup.get(selectedModelId)?.model ?? null,
+              selectedModelSuffix,
+            )
             : null;
           await sendUserMessageToThread(activeWorkspace, threadId, prompt, images, {
             model: localModel,
@@ -568,7 +574,10 @@ export function useWorkspaceHome({
                 prompt,
                 images,
                 {
-                  model: selection.model?.model ?? selection.modelId,
+                  model: appendModelSuffix(
+                    selection.model?.model ?? selection.modelId,
+                    selectedModelSuffix,
+                  ),
                   effort,
                   serviceTier,
                   collaborationMode,
@@ -633,6 +642,7 @@ export function useWorkspaceHome({
     runMode,
     seedThreadCodexParams,
     selectedModelId,
+    selectedModelSuffix,
     serviceTier,
     sendUserMessageToThread,
     setSubmitting,

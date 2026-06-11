@@ -268,6 +268,8 @@ export type AppSettings = {
   cycleWorkspacePrevShortcut: string | null;
   lastComposerModelId: string | null;
   lastComposerReasoningEffort: string | null;
+  modelSuffixOptions: string[];
+  selectedModelSuffix: string | null;
   uiScale: number;
   theme: ThemePreference;
   usageShowRemaining: boolean;

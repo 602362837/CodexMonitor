@@ -137,6 +137,46 @@ describe("useWorkspaceHome", () => {
     });
   });
 
+  it("appends the selected model suffix before sending", async () => {
+    const addWorktreeAgent = vi.fn();
+    const connectWorkspace = vi.fn().mockResolvedValue(undefined);
+    const startThreadForWorkspace = vi.fn().mockResolvedValue("thread-1");
+    const sendUserMessageToThread = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(generateRunMetadata).mockResolvedValue({
+      title: "Suffix run",
+      worktreeName: "feat/suffix",
+    });
+
+    const { result } = renderHook(() =>
+      useWorkspaceHome({
+        activeWorkspace: workspace,
+        models,
+        selectedModelId: "id-1",
+        selectedModelSuffix: "-codex",
+        addWorktreeAgent,
+        connectWorkspace,
+        startThreadForWorkspace,
+        sendUserMessageToThread,
+      }),
+    );
+
+    act(() => {
+      result.current.setDraft("Hello suffix");
+    });
+
+    await act(async () => {
+      await result.current.startRun();
+    });
+
+    expect(sendUserMessageToThread).toHaveBeenCalledWith(
+      workspace,
+      "thread-1",
+      "Hello suffix",
+      [],
+      expect.objectContaining({ model: "gpt-5.1-max-codex" }),
+    );
+  });
+
   it("blocks worktree runs without model selections", async () => {
     const addWorktreeAgent = vi.fn();
     const connectWorkspace = vi.fn();
@@ -171,7 +211,7 @@ describe("useWorkspaceHome", () => {
 
     expect(started).toBe(false);
     expect(result.current.error).toBe(
-      "Select at least one model to run in a worktree.",
+      "请至少选择一个模型在工作树中运行。",
     );
     expect(result.current.runs).toHaveLength(0);
   });
@@ -293,7 +333,7 @@ describe("useWorkspaceHome", () => {
     expect(started).toBe(false);
     expect(result.current.runs).toHaveLength(0);
     expect(result.current.error).toBe(
-      "Select at least one model to run in a worktree.",
+      "请至少选择一个模型在工作树中运行。",
     );
   });
 });

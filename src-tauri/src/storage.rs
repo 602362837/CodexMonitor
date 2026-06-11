@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::types::{AppSettings, WorkspaceEntry, WorkspaceSettings};
@@ -119,12 +119,47 @@ where
 fn normalize_app_settings(settings: AppSettings) -> (AppSettings, bool) {
     let (global_worktrees_folder, changed) =
         normalize_optional_windows_namespace_path(settings.global_worktrees_folder.clone());
+    let mut suffix_changed = false;
+    let mut seen_suffixes = HashSet::new();
+    let model_suffix_options = settings
+        .model_suffix_options
+        .iter()
+        .filter_map(|value| {
+            let trimmed = value.trim();
+            if trimmed.is_empty() || !seen_suffixes.insert(trimmed.to_string()) {
+                suffix_changed = true;
+                return None;
+            }
+            if trimmed != value {
+                suffix_changed = true;
+            }
+            Some(trimmed.to_string())
+        })
+        .collect::<Vec<_>>();
+    let selected_model_suffix = settings.selected_model_suffix.as_ref().and_then(|value| {
+        let trimmed = value.trim();
+        if trimmed.is_empty() {
+            suffix_changed = true;
+            return None;
+        }
+        if trimmed != value {
+            suffix_changed = true;
+        }
+        if model_suffix_options.iter().any(|option| option == trimmed) {
+            Some(trimmed.to_string())
+        } else {
+            suffix_changed = true;
+            None
+        }
+    });
     (
         AppSettings {
             global_worktrees_folder,
+            model_suffix_options,
+            selected_model_suffix,
             ..settings
         },
-        changed,
+        changed || suffix_changed,
     )
 }
 

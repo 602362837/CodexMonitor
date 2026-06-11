@@ -151,6 +151,9 @@ type UseMainAppLayoutSurfacesArgs = {
   selectedModelId: ComposerProps["selectedModelId"];
   onSelectModel: ComposerProps["onSelectModel"];
   onRefreshModels: ComposerProps["onRefreshModels"];
+  modelSuffixOptions: ComposerProps["modelSuffixOptions"];
+  selectedModelSuffix: ComposerProps["selectedModelSuffix"];
+  onSelectModelSuffix: ComposerProps["onSelectModelSuffix"];
   collaborationModes: ComposerProps["collaborationModes"];
   selectedCollaborationModeId: ComposerProps["selectedCollaborationModeId"];
   onSelectCollaborationMode: ComposerProps["onSelectCollaborationMode"];
@@ -318,6 +321,9 @@ function buildPrimarySurface({
   selectedModelId,
   onSelectModel,
   onRefreshModels,
+  modelSuffixOptions,
+  selectedModelSuffix,
+  onSelectModelSuffix,
   collaborationModes,
   selectedCollaborationModeId,
   onSelectCollaborationMode,
@@ -524,6 +530,9 @@ function buildPrimarySurface({
           selectedModelId,
           onSelectModel,
           onRefreshModels,
+          modelSuffixOptions,
+          selectedModelSuffix,
+          onSelectModelSuffix,
           reasoningOptions,
           selectedEffort,
           onSelectEffort,
@@ -1042,6 +1051,9 @@ export function useMainAppLayoutSurfaces({
   selectedModelId,
   onSelectModel,
   onRefreshModels,
+  modelSuffixOptions,
+  selectedModelSuffix,
+  onSelectModelSuffix,
   collaborationModes,
   selectedCollaborationModeId,
   onSelectCollaborationMode,
@@ -1209,6 +1221,9 @@ export function useMainAppLayoutSurfaces({
     selectedModelId,
     onSelectModel,
     onRefreshModels,
+    modelSuffixOptions,
+    selectedModelSuffix,
+    onSelectModelSuffix,
     collaborationModes,
     selectedCollaborationModeId,
     onSelectCollaborationMode,
