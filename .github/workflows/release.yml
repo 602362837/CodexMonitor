@@ -510,7 +510,7 @@ jobs:
           done
 
       - name: Build latest.json
-        if: ${{ !inputs.upload_existing }}
+        if: ${{ !inputs.upload_existing && inputs.sign_artifacts }}
         run: |
           set -euo pipefail
           LAST_TAG=$(git tag --sort=-version:refname \
@@ -659,7 +659,7 @@ jobs:
           PY
 
       - name: Validate latest.json artifact references
-        if: ${{ !inputs.upload_existing }}
+        if: ${{ !inputs.upload_existing && inputs.sign_artifacts }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -718,6 +718,10 @@ jobs:
           mapfile -t mac_zips < <(find release-artifacts -type f -name 'CodexMonitor_*.zip' | sort)
           mapfile -t mac_dmgs < <(find release-artifacts -type f -name 'CodexMonitor_*.dmg' | sort)
           mapfile -t mac_updaters < <(find release-artifacts -type f -name 'CodexMonitor_*.app.tar.gz*' | sort)
+          extra_assets=()
+          if [ -f release-artifacts/latest.json ]; then
+            extra_assets+=(release-artifacts/latest.json)
+          fi
           if [ ${#rpms[@]} -eq 0 ]; then
             echo "No RPM artifacts found for release upload"
             find release-artifacts -type f | sort
@@ -750,7 +754,7 @@ jobs:
             "${rpms[@]}" \
             "${windows_exes[@]}" \
             "${windows_msis[@]}" \
-            release-artifacts/latest.json
+            "${extra_assets[@]}"
 
       - name: Bump version and open PR
         if: ${{ !inputs.upload_existing }}
