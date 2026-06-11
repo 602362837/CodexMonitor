@@ -272,6 +272,7 @@ jobs:
         run: npm ci
 
       - name: Write Tauri signing key
+        if: ${{ inputs.sign_artifacts }}
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.tauri"
@@ -280,9 +281,13 @@ jobs:
       - name: build AppImage and RPM
         run: |
           set -euo pipefail
-          export TAURI_SIGNING_PRIVATE_KEY
-          TAURI_SIGNING_PRIVATE_KEY="$(cat "$HOME/.tauri/codexmonitor.key")"
-          npm run tauri -- build --bundles appimage,rpm
+          if [ "$SIGN_ARTIFACTS" = "true" ]; then
+            export TAURI_SIGNING_PRIVATE_KEY
+            TAURI_SIGNING_PRIVATE_KEY="$(cat "$HOME/.tauri/codexmonitor.key")"
+            npm run tauri -- build --bundles appimage,rpm
+          else
+            npm run tauri -- build --bundles appimage,rpm --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          fi
 
       - name: Validate Linux bundle outputs
         run: |
