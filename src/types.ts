@@ -633,6 +633,7 @@ export type ModelOption = {
   model: string;
   displayName: string;
   description: string;
+  providerTags?: string[];
   supportedReasoningEfforts: { reasoningEffort: string; description: string }[];
   defaultReasoningEffort: string | null;
   isDefault: boolean;

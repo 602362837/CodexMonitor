@@ -286,7 +286,8 @@ export default function MainApp() {
     reasoningSupported,
     reasoningOptions,
     selectedEffort,
-    setSelectedEffort
+    setSelectedEffort,
+    refreshModels,
   } = useModels({
     activeWorkspace,
     onDebug: addDebugEntry,
@@ -1734,6 +1735,7 @@ export default function MainApp() {
     models,
     selectedModelId,
     onSelectModel: handleSelectModel,
+    onRefreshModels: refreshModels,
     collaborationModes,
     selectedCollaborationModeId,
     onSelectCollaborationMode: handleSelectCollaborationMode,

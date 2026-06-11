@@ -754,7 +754,8 @@
   width: max-content;
 }
 
-.composer-select-wrap:has(.composer-select)::after {
+.composer-select-wrap:has(.composer-select)::after,
+.composer-select-wrap:has(.composer-select-button)::after {
   content: "";
   position: absolute;
   right: 10px;
@@ -773,6 +774,11 @@
 }
 
 .composer-select-wrap:has(.composer-select:focus)::after {
+  border-right-color: var(--text-strong);
+  border-bottom-color: var(--text-strong);
+}
+
+.composer-select-wrap:has(.composer-select-button:focus-visible)::after {
   border-right-color: var(--text-strong);
   border-bottom-color: var(--text-strong);
 }
@@ -883,9 +889,40 @@
   background-image: none;
 }
 
+.composer-select-button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 2px 18px 2px 0;
+  cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-select-button:focus {
+  outline: none;
+}
+
+.composer-select-button:focus-visible {
+  color: var(--text-strong);
+}
+
+.composer-select-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .composer-select--model {
   width: var(--composer-model-select-width, auto);
   max-width: none;
+}
+
+.composer-select-button--model {
+  width: clamp(120px, 18vw, 220px);
+  text-align: left;
 }
 
 .composer-select--collab {
@@ -913,7 +950,228 @@
   color: var(--text-strong);
 }
 
+.composer-model-picker-modal {
+  z-index: calc(var(--ds-layer-modal, 40) + 4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.composer-model-picker-modal .ds-modal-backdrop {
+  background: rgba(9, 12, 18, 0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.composer-model-picker-modal .ds-modal-card {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  margin: 0;
+  animation: none;
+}
+
+.composer-model-picker-modal-card {
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(78vh, 760px);
+  border-radius: 8px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.composer-model-picker-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.composer-model-picker-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--ds-border-subtle);
+  background: var(--ds-surface-muted);
+  padding: 10px 12px;
+  color: var(--text-muted);
+}
+
+.composer-model-picker-search-input {
+  border: none;
+  background: transparent;
+  color: var(--text-strong);
+  font-size: 13px;
+  width: 100%;
+}
+
+.composer-model-picker-search-input:focus {
+  outline: none;
+}
+
+.composer-model-picker-tags-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.composer-model-picker-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 30px;
+}
+
+.composer-model-picker-tag,
+.composer-model-picker-item-tag {
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-popover);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.composer-model-picker-tag {
+  padding: 7px 10px;
+}
+
+.composer-model-picker-tag.is-active {
+  border-color: var(--border-accent);
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--surface-popover) 72%, var(--message-link-color) 28%);
+}
+
+.composer-model-picker-refresh {
+  flex: 0 0 32px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface-popover) 88%, var(--surface-card) 12%);
+  color: var(--text-strong);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  padding: 0;
+}
+
+.composer-model-picker-refresh:hover:not(:disabled),
+.composer-model-picker-refresh:focus-visible {
+  border-color: var(--border-accent);
+  background: color-mix(in srgb, var(--surface-popover) 78%, var(--message-link-color) 22%);
+  color: var(--text-strong);
+  outline: none;
+}
+
+.composer-model-picker-refresh:disabled {
+  opacity: 0.55;
+}
+
+.composer-model-picker-refresh-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2px;
+  flex: 0 0 auto;
+}
+
+.composer-model-picker-refresh-icon.spinning {
+  animation: composer-action-spin var(--ds-spinner-dur) linear infinite;
+}
+
+.composer-model-picker-list {
+  min-height: 240px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.composer-model-picker-item {
+  width: 100%;
+  text-align: left;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface-popover) 76%, transparent);
+  color: var(--text-strong);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.composer-model-picker-item:hover,
+.composer-model-picker-item:focus-visible,
+.composer-model-picker-item.is-selected {
+  border-color: var(--border-accent);
+  background: color-mix(in srgb, var(--surface-popover) 64%, var(--message-link-color) 12%);
+  outline: none;
+}
+
+.composer-model-picker-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.composer-model-picker-item-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.composer-model-picker-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.composer-model-picker-item-tag {
+  padding: 4px 8px;
+}
+
+.composer-model-picker-item-model {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.composer-model-picker-item-description,
+.composer-model-picker-empty {
+  font-size: 12px;
+  color: var(--text-quiet);
+}
+
+.composer-model-picker-empty {
+  border-radius: 8px;
+  border: 1px dashed var(--border-subtle);
+  padding: 18px 14px;
+  text-align: center;
+}
+
 @media (max-width: 720px) {
+  .composer-model-picker-modal-card {
+    width: min(100vw - 20px, 720px);
+    max-height: min(82vh, 760px);
+    padding: 14px;
+  }
+
+  .composer-model-picker-tags-row,
+  .composer-model-picker-item-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .composer-model-picker-item-tags {
+    justify-content: flex-start;
+  }
+
   .app.layout-phone .composer-input {
     display: block;
   }

@@ -1,16 +1,23 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useState } from "react";
 import { BrainCog, SlidersHorizontal, Zap } from "lucide-react";
-import type { AccessMode, ServiceTier, ThreadTokenUsage } from "../../../types";
+import type {
+  AccessMode,
+  ModelOption,
+  ServiceTier,
+  ThreadTokenUsage,
+} from "../../../types";
 import type { CodexArgsOption } from "../../threads/utils/codexArgsProfiles";
+import { ComposerModelPickerModal } from "./ComposerModelPickerModal";
 
 type ComposerMetaBarProps = {
   disabled: boolean;
   collaborationModes: { id: string; label: string }[];
   selectedCollaborationModeId: string | null;
   onSelectCollaborationMode: (id: string | null) => void;
-  models: { id: string; displayName: string; model: string }[];
+  models: ModelOption[];
   selectedModelId: string | null;
   onSelectModel: (id: string) => void;
+  onRefreshModels?: () => Promise<void> | void;
   reasoningOptions: string[];
   selectedEffort: string | null;
   onSelectEffort: (effort: string) => void;
@@ -32,6 +39,7 @@ export function ComposerMetaBar({
   models,
   selectedModelId,
   onSelectModel,
+  onRefreshModels,
   reasoningOptions,
   selectedEffort,
   onSelectEffort,
@@ -44,13 +52,11 @@ export function ComposerMetaBar({
   onSelectCodexArgsOverride,
   contextUsage = null,
 }: ComposerMetaBarProps) {
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const selectedModel =
     models.find((model) => model.id === selectedModelId) ?? null;
   const selectedModelLabel =
     selectedModel?.displayName || selectedModel?.model || "没有模型";
-  const modelSelectStyle = {
-    "--composer-model-select-width": `${Math.max(selectedModelLabel.length + 2, 8)}ch`,
-  } as CSSProperties;
   const contextWindow = contextUsage?.modelContextWindow ?? null;
   const lastTokens = contextUsage?.last.totalTokens ?? 0;
   const totalTokens = contextUsage?.total.totalTokens ?? 0;
@@ -172,21 +178,15 @@ export function ComposerMetaBar({
               />
             </svg>
           </span>
-          <select
-            className="composer-select composer-select--model"
-            aria-label="模型"
-            value={selectedModelId ?? ""}
-            onChange={(event) => onSelectModel(event.target.value)}
+          <button
+            type="button"
+            className="composer-select-button composer-select-button--model"
+            aria-label="选择模型"
+            onClick={() => setModelPickerOpen(true)}
             disabled={disabled}
-            style={modelSelectStyle}
           >
-            {models.length === 0 && <option value="">没有模型</option>}
-            {models.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.displayName || model.model}
-              </option>
-            ))}
-          </select>
+            {selectedModelLabel}
+          </button>
           {selectedServiceTier === "fast" && (
             <span
               className="composer-fast-indicator"
@@ -294,6 +294,15 @@ export function ComposerMetaBar({
           <span className="composer-context-value">●</span>
         </div>
       </div>
+      {modelPickerOpen && (
+        <ComposerModelPickerModal
+          models={models}
+          selectedModelId={selectedModelId}
+          onSelectModel={onSelectModel}
+          onRefreshModels={onRefreshModels}
+          onClose={() => setModelPickerOpen(false)}
+        />
+      )}
     </div>
   );
 }

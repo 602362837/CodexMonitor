@@ -87,6 +87,51 @@ function parseReasoningEfforts(item: Record<string, unknown>): ModelOption["supp
   return [];
 }
 
+function parseProviderTags(item: Record<string, unknown>): string[] {
+  const candidates: unknown[] = [
+    item.provider,
+    item.providerName,
+    item.provider_name,
+    item.providerId,
+    item.provider_id,
+    item.owned_by,
+    item.owner,
+    item.ownerName,
+    item.owner_name,
+    item.ownerId,
+    item.owner_id,
+  ];
+
+  const tags = new Set<string>();
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      if (trimmed.length > 0) {
+        tags.add(trimmed);
+      }
+      continue;
+    }
+
+    if (!candidate || typeof candidate !== "object") {
+      continue;
+    }
+
+    const record = candidate as Record<string, unknown>;
+    for (const value of [record.displayName, record.name, record.id]) {
+      if (typeof value !== "string") {
+        continue;
+      }
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        tags.add(trimmed);
+      }
+    }
+  }
+
+  return Array.from(tags);
+}
+
 export function parseModelListResponse(response: unknown): ModelOption[] {
   const items = extractModelItems(response);
 
@@ -104,6 +149,7 @@ export function parseModelListResponse(response: unknown): ModelOption[] {
         model: modelSlug,
         displayName,
         description: String(record.description ?? ""),
+        providerTags: parseProviderTags(record),
         supportedReasoningEfforts: parseReasoningEfforts(record),
         defaultReasoningEffort: normalizeEffortValue(
           record.defaultReasoningEffort ?? record.default_reasoning_effort,
@@ -111,5 +157,5 @@ export function parseModelListResponse(response: unknown): ModelOption[] {
         isDefault: Boolean(record.isDefault ?? record.is_default ?? false),
       } satisfies ModelOption;
     })
-    .filter((model): model is ModelOption => model !== null);
+    .filter((model) => model !== null) as ModelOption[];
 }

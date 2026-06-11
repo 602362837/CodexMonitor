@@ -150,6 +150,7 @@ type UseMainAppLayoutSurfacesArgs = {
   models: ComposerProps["models"];
   selectedModelId: ComposerProps["selectedModelId"];
   onSelectModel: ComposerProps["onSelectModel"];
+  onRefreshModels: ComposerProps["onRefreshModels"];
   collaborationModes: ComposerProps["collaborationModes"];
   selectedCollaborationModeId: ComposerProps["selectedCollaborationModeId"];
   onSelectCollaborationMode: ComposerProps["onSelectCollaborationMode"];
@@ -316,6 +317,7 @@ function buildPrimarySurface({
   models,
   selectedModelId,
   onSelectModel,
+  onRefreshModels,
   collaborationModes,
   selectedCollaborationModeId,
   onSelectCollaborationMode,
@@ -521,6 +523,7 @@ function buildPrimarySurface({
           models,
           selectedModelId,
           onSelectModel,
+          onRefreshModels,
           reasoningOptions,
           selectedEffort,
           onSelectEffort,
@@ -1038,6 +1041,7 @@ export function useMainAppLayoutSurfaces({
   models,
   selectedModelId,
   onSelectModel,
+  onRefreshModels,
   collaborationModes,
   selectedCollaborationModeId,
   onSelectCollaborationMode,
@@ -1204,6 +1208,7 @@ export function useMainAppLayoutSurfaces({
     models,
     selectedModelId,
     onSelectModel,
+    onRefreshModels,
     collaborationModes,
     selectedCollaborationModeId,
     onSelectCollaborationMode,

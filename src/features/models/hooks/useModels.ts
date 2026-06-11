@@ -221,6 +221,7 @@ export function useModels({
           model: configModelFromConfig,
           displayName: `${configModelFromConfig} (config)`,
           description: CONFIG_MODEL_DESCRIPTION,
+          providerTags: [],
           supportedReasoningEfforts: [],
           defaultReasoningEffort: null,
           isDefault: false,

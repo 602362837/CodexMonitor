@@ -709,25 +709,84 @@ async fn fetch_provider_models_from_models_endpoint(
         .unwrap_or_default())
 }
 
-fn provider_model_value(model_id: &str) -> Value {
-    json!({
-        "id": model_id,
-        "model": model_id,
-        "upgrade": null,
-        "upgradeInfo": null,
-        "availabilityNux": null,
-        "displayName": model_id,
-        "description": "Provider /models",
-        "hidden": false,
-        "supportedReasoningEfforts": [],
-        "defaultReasoningEffort": null,
-        "inputModalities": [],
-        "supportsPersonality": false,
-        "additionalSpeedTiers": [],
-        "serviceTiers": [],
-        "defaultServiceTier": null,
-        "isDefault": false,
-    })
+fn provider_model_value(provider_model: Value, model_id: &str) -> Value {
+    let mut object = provider_model
+        .as_object()
+        .cloned()
+        .unwrap_or_default();
+
+    object
+        .entry("id".to_string())
+        .or_insert_with(|| json!(model_id));
+    object
+        .entry("model".to_string())
+        .or_insert_with(|| json!(model_id));
+    object
+        .entry("displayName".to_string())
+        .or_insert_with(|| json!(model_id));
+    object
+        .entry("description".to_string())
+        .or_insert_with(|| json!("Provider /models"));
+    object
+        .entry("hidden".to_string())
+        .or_insert_with(|| json!(false));
+    object
+        .entry("supportedReasoningEfforts".to_string())
+        .or_insert_with(|| json!([]));
+    object
+        .entry("defaultReasoningEffort".to_string())
+        .or_insert_with(|| Value::Null);
+    object
+        .entry("inputModalities".to_string())
+        .or_insert_with(|| json!([]));
+    object
+        .entry("supportsPersonality".to_string())
+        .or_insert_with(|| json!(false));
+    object
+        .entry("additionalSpeedTiers".to_string())
+        .or_insert_with(|| json!([]));
+    object
+        .entry("serviceTiers".to_string())
+        .or_insert_with(|| json!([]));
+    object
+        .entry("defaultServiceTier".to_string())
+        .or_insert_with(|| Value::Null);
+    object
+        .entry("isDefault".to_string())
+        .or_insert_with(|| json!(false));
+
+    Value::Object(object)
+}
+
+fn is_missing_or_empty_value(value: &Value) -> bool {
+    match value {
+        Value::Null => true,
+        Value::String(text) => text.trim().is_empty(),
+        Value::Array(items) => items.is_empty(),
+        Value::Object(map) => map.is_empty(),
+        _ => false,
+    }
+}
+
+fn merge_local_model_with_provider(
+    local_model: &mut serde_json::Map<String, Value>,
+    provider_model: &serde_json::Map<String, Value>,
+) {
+    for (key, provider_value) in provider_model {
+        if matches!(key.as_str(), "id" | "model") {
+            continue;
+        }
+
+        match local_model.get_mut(key) {
+            Some(local_value) if is_missing_or_empty_value(local_value) => {
+                *local_value = provider_value.clone();
+            }
+            Some(_) => {}
+            None => {
+                local_model.insert(key.clone(), provider_value.clone());
+            }
+        }
+    }
 }
 
 fn model_key(value: &Value) -> Option<String> {
@@ -762,8 +821,16 @@ fn merge_provider_models(mut response: Value, provider_models: Vec<Value>) -> Va
         let Some(model_id) = model_key(&provider_model) else {
             continue;
         };
+        if let Some(local_model) = data.iter_mut().find(|item| model_key(item).as_deref() == Some(model_id.as_str())) {
+            if let (Some(local_object), Some(provider_object)) =
+                (local_model.as_object_mut(), provider_model.as_object())
+            {
+                merge_local_model_with_provider(local_object, provider_object);
+            }
+            continue;
+        }
         if seen.insert(model_id.clone()) {
-            data.push(provider_model_value(model_id.as_str()));
+            data.push(provider_model_value(provider_model, model_id.as_str()));
         }
     }
     response
@@ -1197,5 +1264,58 @@ mod tests {
         assert!(THREAD_LIST_SOURCE_KINDS.contains(&"subAgentReview"));
         assert!(THREAD_LIST_SOURCE_KINDS.contains(&"subAgentCompact"));
         assert!(THREAD_LIST_SOURCE_KINDS.contains(&"subAgentThreadSpawn"));
+    }
+
+    #[test]
+    fn merge_provider_models_preserves_provider_metadata_fields() {
+        let response = json!({
+            "result": {
+                "data": []
+            }
+        });
+        let provider_models = vec![json!({
+            "id": "deepseek-v4-flash",
+            "owned_by": "Deepseek",
+            "object": "model"
+        })];
+
+        let merged = merge_provider_models(response, provider_models);
+        let item = &merged["result"]["data"][0];
+
+        assert_eq!(item["id"], json!("deepseek-v4-flash"));
+        assert_eq!(item["model"], json!("deepseek-v4-flash"));
+        assert_eq!(item["displayName"], json!("deepseek-v4-flash"));
+        assert_eq!(item["owned_by"], json!("Deepseek"));
+        assert_eq!(item["description"], json!("Provider /models"));
+    }
+
+    #[test]
+    fn merge_provider_models_enriches_existing_local_model_without_overwriting_local_fields() {
+        let response = json!({
+            "result": {
+                "data": [{
+                    "id": "gpt-5.5",
+                    "model": "gpt-5.5",
+                    "displayName": "GPT-5.5",
+                    "description": "Frontier model",
+                    "owned_by": "",
+                    "supportedReasoningEfforts": []
+                }]
+            }
+        });
+        let provider_models = vec![json!({
+            "id": "gpt-5.5",
+            "owned_by": "openai",
+            "description": "Provider description that should not overwrite",
+            "object": "model"
+        })];
+
+        let merged = merge_provider_models(response, provider_models);
+        let item = &merged["result"]["data"][0];
+
+        assert_eq!(item["displayName"], json!("GPT-5.5"));
+        assert_eq!(item["description"], json!("Frontier model"));
+        assert_eq!(item["owned_by"], json!("openai"));
+        assert_eq!(item["object"], json!("model"));
     }
 }

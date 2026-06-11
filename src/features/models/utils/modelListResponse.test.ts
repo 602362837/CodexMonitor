@@ -68,4 +68,82 @@ describe("parseModelListResponse", () => {
       }),
     ).toBe("cursor-2");
   });
+
+  it("parses provider tags from string fields", () => {
+    const response = {
+      result: {
+        data: [{ id: "m1", model: "gpt-5.3-codex", provider_name: "openai" }],
+      },
+    };
+
+    const [model] = parseModelListResponse(response);
+
+    expect(model.providerTags).toEqual(["openai"]);
+  });
+
+  it("parses provider tags from provider objects", () => {
+    const response = {
+      result: {
+        data: [
+          {
+            id: "m1",
+            model: "gpt-5.3-codex",
+            provider: { displayName: "Anthropic", name: "anthropic", id: "anthropic-id" },
+          },
+        ],
+      },
+    };
+
+    const [model] = parseModelListResponse(response);
+
+    expect(model.providerTags).toEqual(["Anthropic", "anthropic", "anthropic-id"]);
+  });
+
+  it("returns empty provider tags when provider metadata is absent", () => {
+    const response = {
+      result: {
+        data: [{ id: "m1", model: "gpt-5.3-codex" }],
+      },
+    };
+
+    const [model] = parseModelListResponse(response);
+
+    expect(model.providerTags).toEqual([]);
+  });
+
+  it("parses provider tags from owner fields", () => {
+    const response = {
+      result: {
+        data: [
+          {
+            id: "m1",
+            model: "gpt-5.3-codex",
+            owner: { displayName: "OpenAI", name: "openai", id: "openai-id" },
+          },
+        ],
+      },
+    };
+
+    const [model] = parseModelListResponse(response);
+
+    expect(model.providerTags).toEqual(["OpenAI", "openai", "openai-id"]);
+  });
+
+  it("parses provider tags from owned_by fields", () => {
+    const response = {
+      result: {
+        data: [
+          {
+            id: "m1",
+            model: "gpt-5.3-codex",
+            owned_by: "antigravity",
+          },
+        ],
+      },
+    };
+
+    const [model] = parseModelListResponse(response);
+
+    expect(model.providerTags).toEqual(["antigravity"]);
+  });
 });

@@ -14,6 +14,7 @@ import type {
   CustomPromptOption,
   DictationTranscript,
   FollowUpMessageBehavior,
+  ModelOption,
   QueuedMessage,
   ServiceTier,
   ThreadTokenUsage,
@@ -63,9 +64,10 @@ type ComposerProps = {
   collaborationModes: { id: string; label: string }[];
   selectedCollaborationModeId: string | null;
   onSelectCollaborationMode: (id: string | null) => void;
-  models: { id: string; displayName: string; model: string }[];
+  models: ModelOption[];
   selectedModelId: string | null;
   onSelectModel: (id: string) => void;
+  onRefreshModels?: () => Promise<void> | void;
   reasoningOptions: string[];
   selectedEffort: string | null;
   onSelectEffort: (effort: string) => void;
@@ -175,6 +177,7 @@ export const Composer = memo(function Composer({
   models,
   selectedModelId,
   onSelectModel,
+  onRefreshModels,
   reasoningOptions,
   selectedEffort,
   onSelectEffort,
@@ -681,6 +684,7 @@ export const Composer = memo(function Composer({
         models={models}
         selectedModelId={selectedModelId}
         onSelectModel={onSelectModel}
+        onRefreshModels={onRefreshModels}
         reasoningOptions={reasoningOptions}
         selectedEffort={selectedEffort}
         onSelectEffort={onSelectEffort}
