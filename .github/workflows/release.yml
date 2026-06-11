@@ -514,8 +514,8 @@ jobs:
             rpm -qp --requires "$rpm_file"
           done
 
-      - name: Build latest.json
-        if: ${{ !inputs.upload_existing && inputs.sign_artifacts }}
+      - name: Generate release notes
+        if: ${{ !inputs.upload_existing }}
         run: |
           set -euo pipefail
           LAST_TAG=$(git tag --sort=-version:refname \
@@ -564,6 +564,11 @@ jobs:
 
           Path("release-artifacts/release-notes.md").write_text(notes + "\n")
           PY
+
+      - name: Build latest.json
+        if: ${{ !inputs.upload_existing && inputs.sign_artifacts }}
+        run: |
+          set -euo pipefail
 
           python3 - <<PY
           import json
