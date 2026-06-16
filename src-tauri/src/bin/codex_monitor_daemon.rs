@@ -96,22 +96,26 @@ const DEFAULT_LISTEN_ADDR: &str = "127.0.0.1:4732";
 const MAX_IN_FLIGHT_RPC_PER_CONNECTION: usize = 32;
 const DAEMON_NAME: &str = "codex-monitor-daemon";
 
-fn spawn_with_client(
+async fn spawn_with_client(
     event_sink: DaemonEventSink,
+    app_settings: &Mutex<AppSettings>,
     client_version: String,
     entry: WorkspaceEntry,
     default_bin: Option<String>,
     codex_args: Option<String>,
     codex_home: Option<PathBuf>,
-) -> impl std::future::Future<Output = Result<Arc<WorkspaceSession>, String>> {
+) -> Result<Arc<WorkspaceSession>, String> {
+    let settings = app_settings.lock().await.clone();
+    let client_info = settings_core::resolve_app_server_client_info(&settings, &client_version);
     spawn_workspace_session(
         entry,
         default_bin,
         codex_args,
         codex_home,
-        client_version,
+        client_info,
         event_sink,
     )
+    .await
 }
 
 #[derive(Clone)]
@@ -262,6 +266,7 @@ impl DaemonState {
             move |entry, default_bin, codex_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,
@@ -292,6 +297,7 @@ impl DaemonState {
             move |entry, default_bin, codex_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,
@@ -340,6 +346,7 @@ impl DaemonState {
             move |entry, default_bin, codex_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,
@@ -441,6 +448,7 @@ impl DaemonState {
             move |entry, default_bin, codex_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,
@@ -514,6 +522,7 @@ impl DaemonState {
             move |entry, default_bin, codex_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,
@@ -542,6 +551,7 @@ impl DaemonState {
             move |entry, default_bin, codex_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,
@@ -568,6 +578,7 @@ impl DaemonState {
             move |entry, default_bin, next_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,
@@ -692,11 +703,7 @@ impl DaemonState {
         codex_core::resume_thread_core(&self.sessions, workspace_id, thread_id).await
     }
 
-    async fn read_thread(
-        &self,
-        workspace_id: String,
-        thread_id: String,
-    ) -> Result<Value, String> {
+    async fn read_thread(&self, workspace_id: String, thread_id: String) -> Result<Value, String> {
         codex_core::read_thread_core(&self.sessions, workspace_id, thread_id).await
     }
 
@@ -765,8 +772,7 @@ impl DaemonState {
         limit: Option<u32>,
         sort_key: Option<String>,
     ) -> Result<Value, String> {
-        codex_core::list_threads_core(&self.sessions, workspace_id, cursor, limit, sort_key)
-            .await
+        codex_core::list_threads_core(&self.sessions, workspace_id, cursor, limit, sort_key).await
     }
 
     async fn list_mcp_server_status(
@@ -983,6 +989,7 @@ impl DaemonState {
             |entry, default_bin, codex_args, codex_home| {
                 spawn_with_client(
                     self.event_sink.clone(),
+                    &self.app_settings,
                     client_version.clone(),
                     entry,
                     default_bin,

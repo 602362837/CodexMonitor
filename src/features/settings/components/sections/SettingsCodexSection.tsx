@@ -24,7 +24,11 @@ type SettingsCodexSectionProps = {
   onRefreshDefaultModels: () => void;
   codexPathDraft: string;
   codexArgsDraft: string;
+  appServerClientNameDraft: string;
+  appServerClientTitleDraft: string;
+  appServerClientVersionDraft: string;
   codexDirty: boolean;
+  clientInfoValidationError: string | null;
   isSavingSettings: boolean;
   doctorState: {
     status: "idle" | "running" | "done";
@@ -50,6 +54,9 @@ type SettingsCodexSectionProps = {
   globalConfigSaveLabel: string;
   onSetCodexPathDraft: Dispatch<SetStateAction<string>>;
   onSetCodexArgsDraft: Dispatch<SetStateAction<string>>;
+  onSetAppServerClientNameDraft: Dispatch<SetStateAction<string>>;
+  onSetAppServerClientTitleDraft: Dispatch<SetStateAction<string>>;
+  onSetAppServerClientVersionDraft: Dispatch<SetStateAction<string>>;
   onSetGlobalAgentsContent: (value: string) => void;
   onSetGlobalConfigContent: (value: string) => void;
   onBrowseCodex: () => Promise<void>;
@@ -116,7 +123,11 @@ export function SettingsCodexSection({
   onRefreshDefaultModels,
   codexPathDraft,
   codexArgsDraft,
+  appServerClientNameDraft,
+  appServerClientTitleDraft,
+  appServerClientVersionDraft,
   codexDirty,
+  clientInfoValidationError,
   isSavingSettings,
   doctorState,
   codexUpdateState,
@@ -136,6 +147,9 @@ export function SettingsCodexSection({
   globalConfigSaveLabel,
   onSetCodexPathDraft,
   onSetCodexArgsDraft,
+  onSetAppServerClientNameDraft,
+  onSetAppServerClientTitleDraft,
+  onSetAppServerClientVersionDraft,
   onSetGlobalAgentsContent,
   onSetGlobalConfigContent,
   onBrowseCodex,
@@ -324,6 +338,70 @@ export function SettingsCodexSection({
         <div className="settings-help">
           这些设置会应用于所有已连接工作区共享的 Codex app-server。
         </div>
+        <label className="settings-field-label" htmlFor="app-server-client-name">
+          App-server clientInfo.name
+        </label>
+        <div className="settings-field-row">
+          <input
+            id="app-server-client-name"
+            className="settings-input"
+            value={appServerClientNameDraft}
+            placeholder="codex_cli_rs"
+            onChange={(event) => onSetAppServerClientNameDraft(event.target.value)}
+          />
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => onSetAppServerClientNameDraft("")}
+          >
+            清空
+          </button>
+        </div>
+        <label className="settings-field-label" htmlFor="app-server-client-title">
+          App-server clientInfo.title
+        </label>
+        <div className="settings-field-row">
+          <input
+            id="app-server-client-title"
+            className="settings-input"
+            value={appServerClientTitleDraft}
+            placeholder="codex_cli_rs"
+            onChange={(event) => onSetAppServerClientTitleDraft(event.target.value)}
+          />
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => onSetAppServerClientTitleDraft("")}
+          >
+            清空
+          </button>
+        </div>
+        <label className="settings-field-label" htmlFor="app-server-client-version">
+          App-server clientInfo.version
+        </label>
+        <div className="settings-field-row">
+          <input
+            id="app-server-client-version"
+            className="settings-input"
+            value={appServerClientVersionDraft}
+            placeholder="0.140.0"
+            onChange={(event) => onSetAppServerClientVersionDraft(event.target.value)}
+          />
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => onSetAppServerClientVersionDraft("")}
+          >
+            清空
+          </button>
+        </div>
+        <div className="settings-help">
+          为空时回退到当前现状值：<code>codex_monitor</code> / <code>Codex Monitor</code> /
+          当前应用版本。
+        </div>
+        {clientInfoValidationError && (
+          <div className="settings-help settings-error-text">{clientInfoValidationError}</div>
+        )}
         <div className="settings-help">
           逐线程 override 会忽略不支持的 flags：<code>-m</code>/
           <code>--model</code>, <code>-a</code>/<code>--ask-for-approval</code>,{" "}
@@ -339,7 +417,7 @@ export function SettingsCodexSection({
               onClick={() => {
                 void onSaveCodexSettings();
               }}
-              disabled={isSavingSettings}
+              disabled={isSavingSettings || clientInfoValidationError !== null}
             >
               {isSavingSettings ? "保存中..." : "保存"}
             </button>

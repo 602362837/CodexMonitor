@@ -55,6 +55,9 @@ describe("useAppSettings", () => {
     expect(result.current.settings.personality).toBe("friendly");
     expect(result.current.settings.backendMode).toBe("remote");
     expect(result.current.settings.remoteBackendHost).toBe("example:1234");
+    expect(result.current.settings.appServerClientName).toBe("codex_cli_rs");
+    expect(result.current.settings.appServerClientTitle).toBe("codex_cli_rs");
+    expect(result.current.settings.appServerClientVersion).toBe("0.140.0");
   });
 
   it("keeps defaults when getAppSettings fails", async () => {
@@ -71,6 +74,9 @@ describe("useAppSettings", () => {
     expect(result.current.settings.backendMode).toBe("local");
     expect(result.current.settings.dictationModelId).toBe("base");
     expect(result.current.settings.interruptShortcut).toBeTruthy();
+    expect(result.current.settings.appServerClientName).toBe("codex_cli_rs");
+    expect(result.current.settings.appServerClientTitle).toBe("codex_cli_rs");
+    expect(result.current.settings.appServerClientVersion).toBe("0.140.0");
   });
 
   it("persists settings via updateAppSettings and updates local state", async () => {

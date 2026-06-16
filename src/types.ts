@@ -239,6 +239,9 @@ export type OpenAppTarget = {
 export type AppSettings = {
   codexBin: string | null;
   codexArgs: string | null;
+  appServerClientName: string | null;
+  appServerClientTitle: string | null;
+  appServerClientVersion: string | null;
   backendMode: BackendMode;
   remoteBackendProvider: RemoteBackendProvider;
   remoteBackendHost: string;

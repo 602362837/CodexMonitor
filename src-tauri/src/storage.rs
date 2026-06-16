@@ -4,6 +4,10 @@ use std::path::PathBuf;
 use crate::types::{AppSettings, WorkspaceEntry, WorkspaceSettings};
 use serde_json::Value;
 
+const APP_SERVER_CLIENT_NAME_FALLBACK: &str = "codex_cli_rs";
+const APP_SERVER_CLIENT_TITLE_FALLBACK: &str = "codex_cli_rs";
+const APP_SERVER_CLIENT_VERSION_FALLBACK: &str = "0.140.0";
+
 fn normalize_windows_namespace_path(path: &str) -> String {
     if path.is_empty() {
         return String::new();
@@ -68,13 +72,10 @@ fn normalize_optional_windows_namespace_path(path: Option<String>) -> (Option<St
 fn normalize_workspace_settings(settings: WorkspaceSettings) -> (WorkspaceSettings, bool) {
     let (worktrees_folder, changed) =
         normalize_optional_windows_namespace_path(settings.worktrees_folder.clone());
-    let display_name = settings
-        .display_name
-        .clone()
-        .and_then(|name| {
-            let trimmed = name.trim().to_string();
-            (!trimmed.is_empty()).then_some(trimmed)
-        });
+    let display_name = settings.display_name.clone().and_then(|name| {
+        let trimmed = name.trim().to_string();
+        (!trimmed.is_empty()).then_some(trimmed)
+    });
     let display_name_changed = display_name != settings.display_name;
     (
         WorkspaceSettings {
@@ -152,14 +153,28 @@ fn normalize_app_settings(settings: AppSettings) -> (AppSettings, bool) {
             None
         }
     });
+    let normalize_optional_trimmed =
+        |value: Option<String>| value.map(|value| value.trim().to_string());
+    let app_server_client_name =
+        normalize_optional_trimmed(settings.app_server_client_name.clone());
+    let app_server_client_title =
+        normalize_optional_trimmed(settings.app_server_client_title.clone());
+    let app_server_client_version =
+        normalize_optional_trimmed(settings.app_server_client_version.clone());
+    let app_server_client_changed = app_server_client_name != settings.app_server_client_name
+        || app_server_client_title != settings.app_server_client_title
+        || app_server_client_version != settings.app_server_client_version;
     (
         AppSettings {
             global_worktrees_folder,
             model_suffix_options,
             selected_model_suffix,
+            app_server_client_name,
+            app_server_client_title,
+            app_server_client_version,
             ..settings
         },
-        changed || suffix_changed,
+        changed || suffix_changed || app_server_client_changed,
     )
 }
 
@@ -197,18 +212,26 @@ pub(crate) fn write_workspaces(path: &PathBuf, entries: &[WorkspaceEntry]) -> Re
 
 pub(crate) fn read_settings(path: &PathBuf) -> Result<AppSettings, String> {
     if !path.exists() {
-        return Ok(AppSettings::default());
+        let settings = AppSettings::default();
+        write_settings(path, &settings)?;
+        return Ok(settings);
     }
     let data = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
     let mut value: Value = serde_json::from_str(&data).map_err(|e| e.to_string())?;
     migrate_follow_up_message_behavior(&mut value);
+    let wrote_app_server_defaults = migrate_app_server_client_identity_settings(&mut value);
     match serde_json::from_value(value.clone()) {
-        Ok(settings) => Ok(finalize_loaded_settings(path, settings)),
+        Ok(settings) => Ok(finalize_loaded_settings(
+            path,
+            settings,
+            wrote_app_server_defaults,
+        )),
         Err(_) => {
             sanitize_remote_settings_for_tcp_only(&mut value);
             migrate_follow_up_message_behavior(&mut value);
+            let wrote_app_server_defaults = migrate_app_server_client_identity_settings(&mut value);
             serde_json::from_value(value)
-                .map(|settings| finalize_loaded_settings(path, settings))
+                .map(|settings| finalize_loaded_settings(path, settings, wrote_app_server_defaults))
                 .map_err(|e| e.to_string())
         }
     }
@@ -223,9 +246,9 @@ pub(crate) fn write_settings(path: &PathBuf, settings: &AppSettings) -> Result<(
     std::fs::write(path, data).map_err(|e| e.to_string())
 }
 
-fn finalize_loaded_settings(path: &PathBuf, settings: AppSettings) -> AppSettings {
+fn finalize_loaded_settings(path: &PathBuf, settings: AppSettings, migrated: bool) -> AppSettings {
     let (settings, changed) = normalize_app_settings(settings);
-    if changed {
+    if changed || migrated {
         try_rewrite_settings_with_normalized_paths(path, &settings);
     }
     settings
@@ -272,6 +295,25 @@ fn migrate_follow_up_message_behavior(value: &mut Value) {
         "followUpMessageBehavior".to_string(),
         Value::String(if steer_enabled { "steer" } else { "queue" }.to_string()),
     );
+}
+
+fn migrate_app_server_client_identity_settings(value: &mut Value) -> bool {
+    let Value::Object(root) = value else {
+        return false;
+    };
+
+    let mut changed = false;
+    for (key, default_value) in [
+        ("appServerClientName", APP_SERVER_CLIENT_NAME_FALLBACK),
+        ("appServerClientTitle", APP_SERVER_CLIENT_TITLE_FALLBACK),
+        ("appServerClientVersion", APP_SERVER_CLIENT_VERSION_FALLBACK),
+    ] {
+        if !root.contains_key(key) || root.get(key).is_some_and(Value::is_null) {
+            root.insert(key.to_string(), Value::String(default_value.to_string()));
+            changed = true;
+        }
+    }
+    changed
 }
 
 #[cfg(test)]
@@ -364,7 +406,10 @@ mod tests {
         let persisted_entries: Vec<WorkspaceEntry> =
             serde_json::from_str(&persisted).expect("deserialize persisted workspaces");
         assert_eq!(persisted_entries.len(), 1);
-        assert_eq!(persisted_entries[0].path, r"\\?\I:\gpt-projects\json-composer");
+        assert_eq!(
+            persisted_entries[0].path,
+            r"\\?\I:\gpt-projects\json-composer"
+        );
     }
 
     #[test]
@@ -445,6 +490,73 @@ mod tests {
         let settings = read_settings(&path).expect("read settings");
         assert!(!settings.steer_enabled);
         assert_eq!(settings.follow_up_message_behavior, "queue");
+    }
+
+    #[test]
+    fn read_settings_writes_default_app_server_client_identity_for_missing_file() {
+        let temp_dir = std::env::temp_dir().join(format!("codex-monitor-test-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&temp_dir).expect("create temp dir");
+        let path = temp_dir.join("settings.json");
+
+        let settings = read_settings(&path).expect("read settings");
+        assert_eq!(
+            settings.app_server_client_name.as_deref(),
+            Some("codex_cli_rs")
+        );
+        assert_eq!(
+            settings.app_server_client_title.as_deref(),
+            Some("codex_cli_rs")
+        );
+        assert_eq!(
+            settings.app_server_client_version.as_deref(),
+            Some("0.140.0")
+        );
+
+        let persisted = std::fs::read_to_string(&path).expect("read persisted settings");
+        let persisted_settings: AppSettings =
+            serde_json::from_str(&persisted).expect("deserialize persisted settings");
+        assert_eq!(
+            persisted_settings.app_server_client_name.as_deref(),
+            Some("codex_cli_rs")
+        );
+    }
+
+    #[test]
+    fn read_settings_migrates_missing_app_server_client_identity_fields() {
+        let temp_dir = std::env::temp_dir().join(format!("codex-monitor-test-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&temp_dir).expect("create temp dir");
+        let path = temp_dir.join("settings.json");
+
+        std::fs::write(
+            &path,
+            r#"{
+  "theme": "dark"
+}"#,
+        )
+        .expect("write settings");
+
+        let settings = read_settings(&path).expect("read settings");
+        assert_eq!(settings.theme, "dark");
+        assert_eq!(
+            settings.app_server_client_name.as_deref(),
+            Some("codex_cli_rs")
+        );
+        assert_eq!(
+            settings.app_server_client_title.as_deref(),
+            Some("codex_cli_rs")
+        );
+        assert_eq!(
+            settings.app_server_client_version.as_deref(),
+            Some("0.140.0")
+        );
+
+        let persisted = std::fs::read_to_string(&path).expect("read persisted settings");
+        let persisted_settings: AppSettings =
+            serde_json::from_str(&persisted).expect("deserialize persisted settings");
+        assert_eq!(
+            persisted_settings.app_server_client_version.as_deref(),
+            Some("0.140.0")
+        );
     }
 
     #[test]

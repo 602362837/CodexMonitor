@@ -140,6 +140,9 @@ function buildDefaultSettings(): AppSettings {
   return {
     codexBin: null,
     codexArgs: null,
+    appServerClientName: "codex_cli_rs",
+    appServerClientTitle: "codex_cli_rs",
+    appServerClientVersion: "0.140.0",
     backendMode: isMobile ? "remote" : "local",
     remoteBackendProvider: defaultRemote.provider,
     remoteBackendHost: defaultRemote.host,
@@ -256,6 +259,15 @@ function normalizeAppSettings(settings: AppSettings): AppSettings {
     ...remoteBackendSettings,
     codexBin: settings.codexBin?.trim() ? settings.codexBin.trim() : null,
     codexArgs: settings.codexArgs?.trim() ? settings.codexArgs.trim() : null,
+    appServerClientName: settings.appServerClientName?.trim()
+      ? settings.appServerClientName.trim()
+      : null,
+    appServerClientTitle: settings.appServerClientTitle?.trim()
+      ? settings.appServerClientTitle.trim()
+      : null,
+    appServerClientVersion: settings.appServerClientVersion?.trim()
+      ? settings.appServerClientVersion.trim()
+      : null,
     uiScale: clampUiScale(settings.uiScale),
     theme: allowedThemes.has(settings.theme) ? settings.theme : "system",
     uiFontFamily: normalizeFontFamily(

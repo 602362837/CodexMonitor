@@ -383,6 +383,21 @@ pub(crate) struct AppSettings {
     pub(crate) codex_bin: Option<String>,
     #[serde(default, rename = "codexArgs")]
     pub(crate) codex_args: Option<String>,
+    #[serde(
+        default = "default_app_server_client_name",
+        rename = "appServerClientName"
+    )]
+    pub(crate) app_server_client_name: Option<String>,
+    #[serde(
+        default = "default_app_server_client_title",
+        rename = "appServerClientTitle"
+    )]
+    pub(crate) app_server_client_title: Option<String>,
+    #[serde(
+        default = "default_app_server_client_version",
+        rename = "appServerClientVersion"
+    )]
+    pub(crate) app_server_client_version: Option<String>,
     #[serde(default, rename = "backendMode")]
     pub(crate) backend_mode: BackendMode,
     #[serde(default, rename = "remoteBackendProvider")]
@@ -703,6 +718,18 @@ fn default_remote_backend_host() -> String {
 
 fn default_remote_backends() -> Vec<RemoteBackendTarget> {
     Vec::new()
+}
+
+fn default_app_server_client_name() -> Option<String> {
+    Some("codex_cli_rs".to_string())
+}
+
+fn default_app_server_client_title() -> Option<String> {
+    Some("codex_cli_rs".to_string())
+}
+
+fn default_app_server_client_version() -> Option<String> {
+    Some("0.140.0".to_string())
 }
 
 fn default_ui_scale() -> f64 {
@@ -1131,6 +1158,9 @@ impl Default for AppSettings {
         Self {
             codex_bin: None,
             codex_args: None,
+            app_server_client_name: default_app_server_client_name(),
+            app_server_client_title: default_app_server_client_title(),
+            app_server_client_version: default_app_server_client_version(),
             backend_mode: default_backend_mode(),
             remote_backend_provider: RemoteBackendProvider::Tcp,
             remote_backend_host: default_remote_backend_host(),
@@ -1222,6 +1252,18 @@ mod tests {
     fn app_settings_defaults_from_empty_json() {
         let settings: AppSettings = serde_json::from_str("{}").expect("settings deserialize");
         assert!(settings.codex_bin.is_none());
+        assert_eq!(
+            settings.app_server_client_name.as_deref(),
+            Some("codex_cli_rs")
+        );
+        assert_eq!(
+            settings.app_server_client_title.as_deref(),
+            Some("codex_cli_rs")
+        );
+        assert_eq!(
+            settings.app_server_client_version.as_deref(),
+            Some("0.140.0")
+        );
         let expected_backend_mode = if cfg!(target_os = "ios") {
             BackendMode::Remote
         } else {

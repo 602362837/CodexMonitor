@@ -37,7 +37,11 @@ export type SettingsCodexSectionProps = {
   onRefreshDefaultModels: () => void;
   codexPathDraft: string;
   codexArgsDraft: string;
+  appServerClientNameDraft: string;
+  appServerClientTitleDraft: string;
+  appServerClientVersionDraft: string;
   codexDirty: boolean;
+  clientInfoValidationError: string | null;
   isSavingSettings: boolean;
   doctorState: {
     status: "idle" | "running" | "done";
@@ -63,6 +67,9 @@ export type SettingsCodexSectionProps = {
   globalConfigSaveLabel: string;
   onSetCodexPathDraft: Dispatch<SetStateAction<string>>;
   onSetCodexArgsDraft: Dispatch<SetStateAction<string>>;
+  onSetAppServerClientNameDraft: Dispatch<SetStateAction<string>>;
+  onSetAppServerClientTitleDraft: Dispatch<SetStateAction<string>>;
+  onSetAppServerClientVersionDraft: Dispatch<SetStateAction<string>>;
   onSetGlobalAgentsContent: (value: string) => void;
   onSetGlobalConfigContent: (value: string) => void;
   onBrowseCodex: () => Promise<void>;
@@ -75,6 +82,10 @@ export type SettingsCodexSectionProps = {
   onSaveGlobalConfig: () => void;
 };
 
+function isValidHttpHeaderValue(value: string): boolean {
+  return /^[\x20-\x7e]+$/.test(value);
+}
+
 export const useSettingsCodexSection = ({
   appSettings,
   projects,
@@ -84,6 +95,15 @@ export const useSettingsCodexSection = ({
 }: UseSettingsCodexSectionArgs): SettingsCodexSectionProps => {
   const [codexPathDraft, setCodexPathDraft] = useState(appSettings.codexBin ?? "");
   const [codexArgsDraft, setCodexArgsDraft] = useState(appSettings.codexArgs ?? "");
+  const [appServerClientNameDraft, setAppServerClientNameDraft] = useState(
+    appSettings.appServerClientName ?? "",
+  );
+  const [appServerClientTitleDraft, setAppServerClientTitleDraft] = useState(
+    appSettings.appServerClientTitle ?? "",
+  );
+  const [appServerClientVersionDraft, setAppServerClientVersionDraft] = useState(
+    appSettings.appServerClientVersion ?? "",
+  );
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [doctorState, setDoctorState] = useState<{
     status: "idle" | "running" | "done";
@@ -152,11 +172,33 @@ export const useSettingsCodexSection = ({
     setCodexArgsDraft(appSettings.codexArgs ?? "");
   }, [appSettings.codexArgs]);
 
+  useEffect(() => {
+    setAppServerClientNameDraft(appSettings.appServerClientName ?? "");
+  }, [appSettings.appServerClientName]);
+
+  useEffect(() => {
+    setAppServerClientTitleDraft(appSettings.appServerClientTitle ?? "");
+  }, [appSettings.appServerClientTitle]);
+
+  useEffect(() => {
+    setAppServerClientVersionDraft(appSettings.appServerClientVersion ?? "");
+  }, [appSettings.appServerClientVersion]);
+
   const nextCodexBin = codexPathDraft.trim() ? codexPathDraft.trim() : null;
   const nextCodexArgs = normalizeCodexArgsInput(codexArgsDraft);
+  const nextAppServerClientName = appServerClientNameDraft.trim() || null;
+  const nextAppServerClientTitle = appServerClientTitleDraft.trim() || null;
+  const nextAppServerClientVersion = appServerClientVersionDraft.trim() || null;
+  const clientInfoValidationError =
+    nextAppServerClientName !== null && !isValidHttpHeaderValue(nextAppServerClientName)
+      ? "App-server client name 必须是合法的 HTTP header 值。"
+      : null;
   const codexDirty =
     nextCodexBin !== (appSettings.codexBin ?? null) ||
-    nextCodexArgs !== (appSettings.codexArgs ?? null);
+    nextCodexArgs !== (appSettings.codexArgs ?? null) ||
+    nextAppServerClientName !== (appSettings.appServerClientName ?? null) ||
+    nextAppServerClientTitle !== (appSettings.appServerClientTitle ?? null) ||
+    nextAppServerClientVersion !== (appSettings.appServerClientVersion ?? null);
 
   const handleBrowseCodex = async () => {
     const selection = await open({ multiple: false, directory: false });
@@ -167,12 +209,18 @@ export const useSettingsCodexSection = ({
   };
 
   const handleSaveCodexSettings = async () => {
+    if (clientInfoValidationError) {
+      return;
+    }
     setIsSavingSettings(true);
     try {
       await onUpdateAppSettings({
         ...appSettings,
         codexBin: nextCodexBin,
         codexArgs: nextCodexArgs,
+        appServerClientName: nextAppServerClientName,
+        appServerClientTitle: nextAppServerClientTitle,
+        appServerClientVersion: nextAppServerClientVersion,
       });
     } finally {
       setIsSavingSettings(false);
@@ -253,7 +301,11 @@ export const useSettingsCodexSection = ({
     },
     codexPathDraft,
     codexArgsDraft,
+    appServerClientNameDraft,
+    appServerClientTitleDraft,
+    appServerClientVersionDraft,
     codexDirty,
+    clientInfoValidationError,
     isSavingSettings,
     doctorState,
     codexUpdateState,
@@ -273,6 +325,9 @@ export const useSettingsCodexSection = ({
     globalConfigSaveLabel: globalConfigEditorMeta.saveLabel,
     onSetCodexPathDraft: setCodexPathDraft,
     onSetCodexArgsDraft: setCodexArgsDraft,
+    onSetAppServerClientNameDraft: setAppServerClientNameDraft,
+    onSetAppServerClientTitleDraft: setAppServerClientTitleDraft,
+    onSetAppServerClientVersionDraft: setAppServerClientVersionDraft,
     onSetGlobalAgentsContent: setGlobalAgentsContent,
     onSetGlobalConfigContent: setGlobalConfigContent,
     onBrowseCodex: handleBrowseCodex,
